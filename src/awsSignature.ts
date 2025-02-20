@@ -1,4 +1,5 @@
-import type { AWSConfig, AWSFullRequest } from './client.ts';
+import type { AWSFullRequest } from './awsTypes.ts';
+import type { AWSConfig } from './client.ts';
 
 const encodeRfc3986 = (str: string) =>
   encodeURIComponent(str).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
@@ -67,6 +68,8 @@ export async function signRequest(request: AWSFullRequest, config: AWSConfig) {
   const canonicalRequestHash = await hash(encoder.encode(canonicalRequest));
 
   // AWS4 signature
+  if (!config.secretAccessKey) throw new Error('Secret access key is not set');
+  if (!config.region) throw new Error('Region is not set');
   const credentialString = `${date}/${config.region}/${request.service}/aws4_request`;
   const signingKey = await getSigningKey(config.secretAccessKey, date, config.region, request.service);
   const stringToSign = `AWS4-HMAC-SHA256\n${dateTime}\n${credentialString}\n${canonicalRequestHash}`;

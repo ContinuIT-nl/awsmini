@@ -1,4 +1,4 @@
-import type { AWSRequest } from './client.ts';
+import type { AWSRequest } from './awsTypes.ts';
 
 // Utility functions
 export const toDashName = (name: string) => name.replace(/([A-Z])/g, '-$1').toLowerCase();

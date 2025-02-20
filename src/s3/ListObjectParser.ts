@@ -1,6 +1,6 @@
 import { addElement, emptyXmlEvents, xmlScanner } from '@continuit/xmlscanner';
 import type { S3Object, S3Owner } from './types.ts';
-import { ListObjectResult } from '../mod.ts';
+import type { ListObjectResult } from '../mod.ts';
 
 class ListObjectParser {
   // Events
@@ -60,7 +60,7 @@ class ListObjectParser {
 
 let listObjectParser: ListObjectParser | null = null;
 
-export function parseListObjects(xml: string) {
+export function parseListObjects(xml: string): ListObjectResult {
   if (!listObjectParser) listObjectParser = new ListObjectParser();
   return listObjectParser.parse(xml);
 }

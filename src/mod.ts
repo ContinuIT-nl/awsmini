@@ -1,12 +1,12 @@
-export type { AWSConfig, AWSRequest, HTTPMethod } from './client.ts';
 export { AWSClient } from './client.ts';
+export type { AWSFullRequest, AWSRequest } from './awsTypes.ts';
 
 export {
-  ListBuckets,
   S3CopyObject,
   S3DeleteObject,
   S3GetObject,
   S3HeadObject,
+  S3ListBuckets,
   S3ListObjects,
   S3PutObject,
 } from './s3/s3.ts';

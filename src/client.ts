@@ -1,14 +1,13 @@
 import { signRequest } from './awsSignature.ts';
+import type { AWSFullRequest, AWSRequest } from './awsTypes.ts';
 import type { ClientConfig } from './clientConfig.ts';
 import * as process from 'node:process';
 
 type Environment = Record<string, string>;
 
+// Only access env once and only if needed.
 let cacheEnv: Environment | undefined;
 const env = () => cacheEnv ?? (cacheEnv = process.env as Environment);
-
-// Use a caching strategy here
-// const _loadAwsConfig = (_config: ClientConfig) => {
 
 function parseEndpoint(endpoint: string | undefined) {
   if (!endpoint) {
@@ -18,47 +17,77 @@ function parseEndpoint(endpoint: string | undefined) {
   return { protocol: url.protocol.replace(':', ''), host: url.host };
 }
 
-function enrichConfig(config: ClientConfig) {
-  const result = {
-    region: config.region ?? (env().AWS_REGION ?? env().AWS_DEFAULT_REGION ?? env().AMAZON_REGION), // || loadAwsConfig(config).region,
-    accessKeyId: config.accessKeyId ?? (env().AWS_ACCESS_KEY_ID ?? env().AWS_ACCESS_KEY), // ~/.aws/credentials
-    secretAccessKey: config.secretAccessKey ?? (env().AWS_SECRET_ACCESS_KEY ?? env().AWS_SECRET_KEY), // ~/.aws/credentials
-    sessionToken: config.sessionToken ?? (env().AWS_SESSION_TOKEN ?? undefined), // ~/.aws/credentials
-    ...parseEndpoint(config.endpoint ?? env().AWS_ENDPOINT_URL), // || loadAwsConfig(config).endpoint,
-    // maxRetries etc
-  };
-  if (result.region === undefined) {
-    throw new Error('Region is not set');
-  }
-  return result;
-}
+export type AWSBaseRequest = {
+  client: AWSClient;
+  signal?: AbortSignal;
+  checkResponse?: boolean;
+};
 
-export type AWSConfig = ReturnType<typeof enrichConfig>;
-
-// IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+export type AWSConfig = {
+  region: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+  protocol: string;
+  host: string;
+};
 
 export class AWSClient {
-  private config: AWSConfig;
+  private clientConfig: ClientConfig;
+  private config: AWSConfig | undefined;
   private fetch: typeof fetch;
 
   constructor(config?: ClientConfig) {
-    this.config = enrichConfig(config ?? {});
-    this.fetch = config?.fetch ?? fetch; // todo: allow to set a default for all further constructor invocations
+    this.clientConfig = config ?? {};
+    this.fetch = this.clientConfig.fetch ?? fetch; // todo: allow to set a default for all further constructor invocations
   }
 
-  async execute(request: AWSRequest) {
+  private getConfig(): AWSConfig {
+    if (!this.config) {
+      const clientConfig = this.clientConfig;
+      // todo: support extensions for loading from .awsconfig, etc.
+      // IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+
+      const region = clientConfig.region ?? env().AWS_REGION ?? env().AWS_DEFAULT_REGION ?? env().AMAZON_REGION;
+      if (region === undefined) throw new Error('Region is not set');
+
+      const accessKeyId = clientConfig.accessKeyId ?? env().AWS_ACCESS_KEY_ID ?? env().AWS_ACCESS_KEY;
+      if (accessKeyId === undefined) throw new Error('Access key ID is not set');
+
+      const secretAccessKey = clientConfig.secretAccessKey ?? env().AWS_SECRET_ACCESS_KEY ?? env().AWS_SECRET_KEY;
+      if (secretAccessKey === undefined) throw new Error('Secret access key is not set');
+
+      const result = {
+        region,
+        accessKeyId,
+        secretAccessKey,
+        sessionToken: clientConfig.sessionToken ?? env().AWS_SESSION_TOKEN,
+        ...parseEndpoint(clientConfig.endpoint ?? env().AWS_ENDPOINT_URL),
+        // maxRetries etc
+      };
+      this.config = result;
+    }
+    return this.config;
+  }
+
+  async execute(request: AWSRequest): Promise<Response> {
+    const config = this.getConfig();
+
+    const host = config.host || `${request.service}.${config.region}.amazonaws.com`;
+
     const fullRequest: AWSFullRequest = {
       ...request,
-      host: this.getHost(request.service, request.subhost),
-      region: this.config.region,
+      host: request.subhost ? `${request.subhost}.${host}` : host,
+      region: config.region,
     };
-    await signRequest(fullRequest, this.config);
+
+    await signRequest(fullRequest, config);
 
     const params = Object.entries(fullRequest.queryParameters).map(
       ([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
     ).join('&');
 
-    const url = `${this.config.protocol}://${fullRequest.host}${fullRequest.path}${params ? '?' + params : ''}`;
+    const url = `${config.protocol}://${fullRequest.host}${fullRequest.path}${params ? '?' + params : ''}`;
 
     const headers = Object.entries(fullRequest.headers)
       .filter(([_key, value]) => value)
@@ -83,31 +112,4 @@ export class AWSClient {
     // todo: handle retries, timeouts, etc.
     return response;
   }
-
-  private getHost(service: string, prefix?: string) {
-    const host = this.config.host || `${service}.${this.config.region}.amazonaws.com`;
-    return prefix ? `${prefix}.${host}` : host;
-  }
 }
-
-export type HTTPMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-
-export type AWSRequest = {
-  method: HTTPMethod;
-  subhost: string | undefined;
-  path: string;
-  service: 's3';
-  queryParameters: Record<string, string>;
-  headers: Record<string, string>;
-  body?: Uint8Array;
-  signal?: AbortSignal;
-  checkResponse: boolean;
-};
-
-export type AWSFullRequest = AWSRequest & { host: string; region: string };
-
-export type AWSBaseRequest = {
-  client: AWSClient;
-  signal?: AbortSignal;
-  checkResponse?: boolean;
-};

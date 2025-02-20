@@ -1,36 +1,36 @@
 {
-    "name": "@continuit/awsmini",
-    "version": "0.0.1",
-    "description": "Access AWS (compatible) services fast in with simple tree shakeable code",
-    "repository": "https://github.com/ContinuIT-nl/awsmini",
-    "license": "MIT",
-    "author": "ContinuIT BV, The Netherlands",
-    "tasks": {
-      "test": "deno test -RWNE --env=.env"
-    },
-    "imports": {
-      "@continuit/xmlscanner": "jsr:@continuit/xmlscanner@^1.0.0",
-      "@std/assert": "jsr:@std/assert@1.0.11"
-    },
-    "exports": "./src/mod.ts",
-    "publish": {
-      "include": [
-        "LICENSE",
-        "README.md",
-        "src/**/*.ts"
-      ]
-    },
-    "fmt": {
-      "indentWidth": 2,
-      "lineWidth": 120,
-      "semiColons": true,
-      "singleQuote": true,
-      "proseWrap": "preserve",
-      "useTabs": false
-    },
-    "lint": {
-    },
-    "test": {
-        "include": ["./test/**/*.test.ts"]
-    }
+  "name": "@continuit/awsmini",
+  "version": "0.0.1",
+  "description": "Access AWS (compatible) services fast in with simple tree shakeable code",
+  "repository": "https://github.com/ContinuIT-nl/awsmini",
+  "license": "MIT",
+  "author": "ContinuIT BV, The Netherlands",
+  "tasks": {
+    "test": "deno test -RWNE --env=.env"
+  },
+  "imports": {
+    "@continuit/xmlscanner": "jsr:@continuit/xmlscanner@^1.0.0",
+    "@std/assert": "jsr:@std/assert@1.0.11"
+  },
+  "exports": "./src/mod.ts",
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "src/**/*.ts"
+    ]
+  },
+  "fmt": {
+    "indentWidth": 2,
+    "lineWidth": 120,
+    "semiColons": true,
+    "singleQuote": true,
+    "proseWrap": "preserve",
+    "useTabs": false
+  },
+  "lint": {
+  },
+  "test": {
+    "include": ["./test/**/*.test.ts"]
   }
+}

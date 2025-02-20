@@ -1,10 +1,10 @@
 import {
   AWSClient,
   type ClientConfig,
-  ListBuckets,
   S3DeleteObject,
   S3GetObject,
   S3HeadObject,
+  S3ListBuckets,
   S3ListObjects,
   S3PutObject,
 } from '../src/mod.ts';
@@ -131,7 +131,7 @@ Deno.test('S3ListObjects commonPrefix', async () => {
 // ListBuckets
 Deno.test('ListBuckets', async () => {
   const client = new AWSClient(config);
-  const result = await ListBuckets({ client, prefix: 'rits' });
+  const result = await S3ListBuckets({ client, prefix: 'rits' });
   assert(!result.continuationToken, 'ListBuckets returned a continuation token');
   assert(result.buckets.length > 0, 'ListBuckets returned no buckets');
   assert(result.owner.id, 'ListBuckets returned no owner id');
