@@ -100,11 +100,15 @@ export class AWSClient {
       signal: fullRequest.signal,
     });
     // should we throw an error if the response is not ok?
+    // todo: Error: HTTP 404 Not Found: unknown error <?xml version="1.0" encoding="UTF-8"?>
+    // <Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message>
+    // <BucketName>continuit-test-likdgbdshy</BucketName><RequestId>G9EK08MRNEMRME5X</RequestId>
+    // <HostId>d4IpWTPTZtVD5cCjmZS5lwaY5U3Tx9TS3vC83s49GCfYHQPFqM96tiYyPzkXU2zUPqjxF28Vqgo=</HostId></Error>
     if (request.checkResponse && !response.ok) {
       const errorsText = await response.text();
       const errors = errorsText.match(/<Error><Code>(.*?)<\/Code><Message>(.*?)<\/Message><\/Error>/);
       throw new Error(
-        `HTTP ${response.status} ${response.statusText}: ${errors?.[1] ?? 'unknown error'} ${
+        `HTTP ${response.status} ${response.statusText}: [${errors?.[1] ?? 'unknown error'}] ${
           errors?.[2] ?? errorsText
         }`,
       );

@@ -1,6 +1,6 @@
 import type { AWSBaseRequest } from '../client.ts';
 import type { AWSRequest, HTTPMethod } from '../awsTypes.ts';
-import { addParameters, type KeyNameArray } from '../utilities.ts';
+import { addQueryParameters } from '../utilities.ts';
 import { parseListBuckets } from './ListBucketsParser.ts';
 import { parseListObjects } from './ListObjectParser.ts';
 import type { ListObjectResult, S3BucketListResult } from './types.ts';
@@ -22,33 +22,26 @@ type AWSIfOptions = {
 };
 
 export type S3CopyObjectRequest = AWSS3KeyRequest & { sourceBucket: string; sourceKey: string };
+
 export type S3DeleteObjectRequest = AWSS3KeyRequest;
 export type S3GetObjectRequest = AWSS3KeyRequest & AWSIfOptions;
 export type S3HeadObjectRequest = AWSS3KeyRequest & AWSIfOptions;
-export type S3PutObjectRequest = AWSS3KeyRequest & { body: Uint8Array };
+export type S3PutObjectRequest = AWSS3KeyRequest & { body: Uint8Array; contentSha256?: string | true };
 
 export type S3ListObjectsRequest = AWSS3BaseRequest & { prefix?: string; delimiter?: string };
 
 export type S3CreateMultipartUploadRequest = AWSS3KeyRequest;
-export type S3CompleteMultipartUploadRequest = AWSS3KeyRequest & { uploadId: string };
+export type S3CompleteMultipartUploadRequest = AWSS3KeyRequest & { uploadId: string; body: Uint8Array };
 export type S3AbortMultipartUploadRequest = AWSS3KeyRequest & { uploadId: string };
+export type S3UploadPartRequest = AWSS3KeyRequest & { uploadId: string; partNumber: number; body: Uint8Array };
 
-export type S3ListBucketsRequest = AWSBaseRequest & {
-  bucketRegion?: string;
-  continuationToken?: string;
-  maxBuckets?: number;
-  prefix?: string;
-};
+const S3ListBucketsParameters = ['bucketRegion', 'continuationToken', 'maxBuckets', 'prefix'] as const;
 
-const S3ListBucketsParameters: KeyNameArray<S3ListBucketsRequest> = [
-  'bucketRegion',
-  'continuationToken',
-  'maxBuckets',
-  'prefix',
-];
+export type S3ListBucketsRequest =
+  & AWSBaseRequest
+  & Partial<{ [K in (typeof S3ListBucketsParameters)[number]]: string }>;
 
 // Request building
-
 const S3KeyOptions = (request: AWSS3KeyRequest, method: HTTPMethod): AWSRequest => {
   if (!request.key) throw new Error('Key is required and should be at least one character long');
   return {
@@ -133,6 +126,10 @@ export async function S3HeadObject(request: S3HeadObjectRequest): Promise<Respon
 export async function S3PutObject(request: S3PutObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'PUT');
   req.body = request.body;
+  const sha256 = request.contentSha256
+    ? (typeof request.contentSha256 === 'string' ? request.contentSha256 : '')
+    : 'UNSIGNED-PAYLOAD';
+  req.headers['x-amz-content-sha256'] = sha256;
   return cancelBody(await request.client.execute(req));
 }
 
@@ -164,7 +161,7 @@ export async function S3ListObjects(request: S3ListObjectsRequest): Promise<List
 //   return parseListObjects(await response.text());
 // }
 
-export async function S3CreateMultipartUpload(request: S3CreateMultipartUploadRequest) {
+export async function S3CreateMultipartUpload(request: S3CreateMultipartUploadRequest): Promise<string> {
   const req = S3KeyOptions(request, 'POST');
   req.queryParameters['uploads'] = '';
   const response = await request.client.execute(req);
@@ -174,25 +171,29 @@ export async function S3CreateMultipartUpload(request: S3CreateMultipartUploadRe
   //  <Key>string</Key>
   //  <UploadId>string</UploadId>
   // </InitiateMultipartUploadResult> --> extract uploadId
-  return await response.text();
+  const text = await response.text();
+  const uploadId = text.match(/<UploadId>(.*?)<\/UploadId>/)?.[1];
+  if (!uploadId) throw new Error('UploadId not found');
+  return uploadId;
 }
 
+export async function S3UploadPart(request: S3UploadPartRequest) {
+  const req = S3KeyOptions(request, 'PUT');
+  req.queryParameters['uploadId'] = request.uploadId;
+  req.queryParameters['partNumber'] = request.partNumber.toString();
+  req.body = request.body;
+  // req.headers['x-amz-content-sha256'] = 'UNSIGNED-PAYLOAD';
+  return cancelBody(await request.client.execute(req));
+}
+
+// <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+//   <Part><ETag>string</ETag><PartNumber>integer</PartNumber></Part>
+// </CompleteMultipartUpload>
 export async function S3CompleteMultipartUpload(request: S3CompleteMultipartUploadRequest) {
   const req = S3KeyOptions(request, 'POST');
   req.queryParameters['uploadId'] = request.uploadId;
-  return await request.client.execute(req);
-  // <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-  //   <Part>
-  //     <ChecksumCRC32>string</ChecksumCRC32>
-  //     <ChecksumCRC32C>string</ChecksumCRC32C>
-  //     <ChecksumCRC64NVME>string</ChecksumCRC64NVME>
-  //     <ChecksumSHA1>string</ChecksumSHA1>
-  //     <ChecksumSHA256>string</ChecksumSHA256>
-  //     <ETag>string</ETag>
-  //     <PartNumber>integer</PartNumber>
-  //   </Part>
-  //   ...
-  // </CompleteMultipartUpload>
+  req.body = request.body;
+  return cancelBody(await request.client.execute(req));
 }
 
 export async function S3AbortMultipartUpload(request: S3AbortMultipartUploadRequest) {
@@ -200,9 +201,6 @@ export async function S3AbortMultipartUpload(request: S3AbortMultipartUploadRequ
   req.queryParameters['uploadId'] = request.uploadId;
   return await request.client.execute(req);
 }
-
-// todo: multipart upload, multipart download, bucketv calls etc
-// todo: make hashing optional, now oit is skipped for S3
 
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html
 export async function S3ListBuckets(request: S3ListBucketsRequest): Promise<S3BucketListResult> {
@@ -216,7 +214,7 @@ export async function S3ListBuckets(request: S3ListBucketsRequest): Promise<S3Bu
     path: '/',
     service: 's3',
   };
-  addParameters(request, req, S3ListBucketsParameters);
+  addQueryParameters(request, req, S3ListBucketsParameters);
   const response = await request.client.execute(req);
   return parseListBuckets(await response.text());
 }

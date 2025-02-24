@@ -1,5 +1,10 @@
+// Base part
+
 export { AWSClient } from './client.ts';
 export type { AWSFullRequest, AWSRequest } from './awsTypes.ts';
+export type { ClientConfig } from './clientConfig.ts';
+
+// S3
 
 export {
   S3CopyObject,
@@ -26,4 +31,12 @@ export type {
 
 export type { ListObjectResult, S3Bucket, S3BucketListResult, S3Object, S3Owner } from './s3/types.ts';
 
-export type { ClientConfig } from './clientConfig.ts';
+export { multipartUpload } from './s3/multiPartUpload.ts';
+
+// SQS
+
+// SNS
+
+// Lambda
+
+// DynamoDB
