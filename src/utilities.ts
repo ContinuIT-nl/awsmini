@@ -31,13 +31,20 @@ export const hashSha256 = async (data: BufferSource) => bufferToHex(await crypto
 export const emptyHashSha256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
 // todo: faster escape
-export const xmlEscape = (str: string) => str.replace(/[<>&'"]/g, (c) => {
-  switch (c) {
-    case '<': return '&lt;';
-    case '>': return '&gt;';
-    case '&': return '&amp;';
-    case '\'': return '&apos;';
-    case '"': return '&quot;';
-    default: return c;
-  }
-});
+export const xmlEscape = (str: string) =>
+  str.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '&':
+        return '&amp;';
+      case "'":
+        return '&apos;';
+      case '"':
+        return '&quot;';
+      default:
+        return c;
+    }
+  });
