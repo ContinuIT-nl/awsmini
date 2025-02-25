@@ -2,13 +2,30 @@ import { xmlEscape } from '../utilities.ts';
 import { S3AbortMultipartUpload, S3CompleteMultipartUpload, S3CreateMultipartUpload, S3UploadPart } from './s3.ts';
 import type { S3CreateMultipartUploadRequest } from './s3.ts';
 
-export type multipartUploadRequest = S3CreateMultipartUploadRequest & {
+export type S3MultipartUploadRequest = S3CreateMultipartUploadRequest & {
   nextPart: (partNumber: number) => { body: Uint8Array; isFinalPart: boolean };
 };
 
-// todo: also create a streaming variant
+// todo: own error type
+// todo: streaming variant
+//
+/**
+ * Initiates a multipart upload to S3, uploads each part, and completes the upload.
+ * If any part fails to upload, the multipart upload is aborted.
+ *
+ * @param {S3MultipartUploadRequest} request - The multipart upload request object.
+ * {AWSClient} request.client - The AWS client to use for the upload.
+ * {string} request.bucket - The name of the S3 bucket.
+ * {string} request.key - The key for the S3 object.
+ * {AbortSignal} [request.signal] - An optional AbortSignal to cancel the request.
+ * {function} request.nextPart - A function that returns the next part to upload.
+ * {Uint8Array} request.nextPart.body - The body of the part to upload.
+ * {boolean} request.nextPart.isFinalPart - Whether the part is the final part of the upload.
+ * @returns {Promise<void>} A promise that resolves when the upload is complete.
+ * @throws {Error} If any part fails to upload or if the multipart upload is aborted.
+ */
 
-export async function multipartUpload(request: multipartUploadRequest): Promise<void> {
+export async function S3MultipartUpload(request: S3MultipartUploadRequest): Promise<void> {
   const uploadId = await S3CreateMultipartUpload(request);
   try {
     const xml = [

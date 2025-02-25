@@ -1,13 +1,13 @@
 import {
   AWSClient,
   type ClientConfig,
-  multipartUpload,
   S3CopyObject,
   S3DeleteObject,
   S3GetObject,
   S3HeadObject,
   S3ListBuckets,
   S3ListObjects,
+  S3MultipartUpload,
   S3PutObject,
 } from '../src/mod.ts';
 import { assert, assertEquals, assertIsError, assertThrows } from '@std/assert';
@@ -213,7 +213,7 @@ Deno.test('multipartUpload', async () => {
   const _10MB_ = 10 * 1024 * 1024;
   const body = new Uint8Array(_10MB_ * 5);
   for (let i = 0; i < body.length; i++) body[i] = (i + i >> 16) % 256;
-  await multipartUpload({
+  await S3MultipartUpload({
     client,
     bucket,
     key: 'hello/big',
@@ -232,7 +232,7 @@ Deno.test('multipartUpload - tooSmall', async () => {
   const body = new Uint8Array(_1MB_ * 5);
   for (let i = 0; i < body.length; i++) body[i] = (i + i >> 16) % 256;
   try {
-    await multipartUpload({
+    await S3MultipartUpload({
       client,
       bucket,
       key: 'hello/big-too-small',

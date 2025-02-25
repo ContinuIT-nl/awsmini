@@ -31,7 +31,7 @@ export type {
 
 export type { ListObjectResult, S3Bucket, S3BucketListResult, S3Object, S3Owner } from './s3/types.ts';
 
-export { multipartUpload } from './s3/multiPartUpload.ts';
+export { S3MultipartUpload } from './s3/multiPartUpload.ts';
 
 // SQS
 
