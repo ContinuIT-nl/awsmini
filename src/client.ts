@@ -1,5 +1,5 @@
 import { signRequest } from './awsSignature.ts';
-import type { AWSFullRequest, AWSRequest } from './awsTypes.ts';
+import type { AWSConfig, AWSFullRequest, AWSRequest } from './awsTypes.ts';
 import type { ClientConfig } from './clientConfig.ts';
 import * as process from 'node:process';
 
@@ -16,21 +16,6 @@ function parseEndpoint(endpoint: string | undefined) {
   const url = new URL(endpoint);
   return { protocol: url.protocol.replace(':', ''), host: url.host };
 }
-
-export type AWSBaseRequest = {
-  client: AWSClient;
-  signal?: AbortSignal;
-  checkResponse?: boolean;
-};
-
-export type AWSConfig = {
-  region: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-  sessionToken?: string;
-  protocol: string;
-  host: string;
-};
 
 export class AWSClient {
   private clientConfig: ClientConfig;

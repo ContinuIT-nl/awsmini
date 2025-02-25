@@ -1,3 +1,4 @@
+import type { AWSClient } from '../client.ts';
 import { xmlEscape } from '../utilities.ts';
 import { S3AbortMultipartUpload, S3CompleteMultipartUpload, S3CreateMultipartUpload, S3UploadPart } from './s3.ts';
 import type { S3CreateMultipartUploadRequest } from './s3.ts';
@@ -25,8 +26,8 @@ export type S3MultipartUploadRequest = S3CreateMultipartUploadRequest & {
  * @throws {Error} If any part fails to upload or if the multipart upload is aborted.
  */
 
-export async function S3MultipartUpload(request: S3MultipartUploadRequest): Promise<void> {
-  const uploadId = await S3CreateMultipartUpload(request);
+export async function S3MultipartUpload(client: AWSClient, request: S3MultipartUploadRequest): Promise<void> {
+  const uploadId = await S3CreateMultipartUpload(client, request);
   try {
     const xml = [
       '<?xml version="1.0" encoding="UTF-8"?>',
@@ -37,8 +38,7 @@ export async function S3MultipartUpload(request: S3MultipartUploadRequest): Prom
       const { body, isFinalPart } = request.nextPart(partNumber);
       // Parts (except the last one) should be at least 5MB in size (EntityTooSmall)
       if (!isFinalPart && (body.byteLength < 5 * 1024 * 1024)) throw new Error('Part is too small');
-      const uploadRequest = await S3UploadPart({
-        client: request.client,
+      const uploadRequest = await S3UploadPart(client, {
         bucket: request.bucket,
         key: request.key,
         uploadId,
@@ -58,8 +58,7 @@ export async function S3MultipartUpload(request: S3MultipartUploadRequest): Prom
     xml.push('</CompleteMultipartUpload>');
     const body = new TextEncoder().encode(xml.join(''));
 
-    await S3CompleteMultipartUpload({
-      client: request.client,
+    await S3CompleteMultipartUpload(client, {
       bucket: request.bucket,
       key: request.key,
       uploadId,
@@ -67,8 +66,7 @@ export async function S3MultipartUpload(request: S3MultipartUploadRequest): Prom
       body,
     });
   } catch (error) {
-    await S3AbortMultipartUpload({
-      client: request.client,
+    await S3AbortMultipartUpload(client, {
       bucket: request.bucket,
       key: request.key,
       uploadId,

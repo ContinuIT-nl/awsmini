@@ -13,3 +13,17 @@ export type AWSRequest = {
 };
 
 export type AWSFullRequest = AWSRequest & { host: string; region: string };
+
+export type AWSBaseRequest = {
+  signal?: AbortSignal;
+  checkResponse?: boolean;
+};
+
+export type AWSConfig = {
+  region: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+  protocol: string;
+  host: string;
+};

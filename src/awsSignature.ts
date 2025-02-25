@@ -1,5 +1,4 @@
-import type { AWSFullRequest } from './awsTypes.ts';
-import type { AWSConfig } from './client.ts';
+import type { AWSConfig, AWSFullRequest } from './awsTypes.ts';
 import { bufferToHex, emptyHashSha256, encodeRfc3986, hashSha256, hmacSha256 } from './utilities.ts';
 
 const encoder = new TextEncoder();

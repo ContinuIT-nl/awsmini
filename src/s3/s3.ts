@@ -1,5 +1,5 @@
-import type { AWSBaseRequest } from '../client.ts';
-import type { AWSRequest, HTTPMethod } from '../awsTypes.ts';
+import type { AWSBaseRequest, AWSRequest, HTTPMethod } from '../awsTypes.ts';
+import type { AWSClient } from '../client.ts';
 import { addQueryParameters } from '../utilities.ts';
 import { parseListBuckets } from './ListBucketsParser.ts';
 import { parseListObjects } from './ListObjectParser.ts';
@@ -95,25 +95,25 @@ const cancelBody = (response: Response) => {
 };
 
 /// https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
-export async function S3CopyObject(request: S3CopyObjectRequest): Promise<Response> {
+export async function S3CopyObject(client: AWSClient, request: S3CopyObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'PUT');
   req.headers['x-amz-copy-source'] = `${request.sourceBucket}/${request.sourceKey}`;
-  return cancelBody(await request.client.execute(req));
+  return cancelBody(await client.execute(req));
 }
 
 /// https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
-export async function S3GetObject(request: S3GetObjectRequest): Promise<Uint8Array> {
+export async function S3GetObject(client: AWSClient, request: S3GetObjectRequest): Promise<Uint8Array> {
   const req = S3KeyOptions(request, 'GET');
   AWSAddIfOptions(req, request);
-  return (await request.client.execute(req)).bytes();
+  return (await client.execute(req)).bytes();
   // todo: handle streaming, range requests, etc.
 }
 
 /// https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
-export async function S3HeadObject(request: S3HeadObjectRequest): Promise<Response> {
+export async function S3HeadObject(client: AWSClient, request: S3HeadObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'HEAD');
   AWSAddIfOptions(req, request);
-  return cancelBody(await request.client.execute(req));
+  return cancelBody(await client.execute(req));
 }
 // Interesting headers:
 //   content-type:                 application/json
@@ -123,30 +123,30 @@ export async function S3HeadObject(request: S3HeadObjectRequest): Promise<Respon
 //   x-amz-meta-sha256:            c61c3b9a8361985b1f4e492904d93d99a300ac727463bb7a262a8b7b57192ea7
 
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
-export async function S3PutObject(request: S3PutObjectRequest): Promise<Response> {
+export async function S3PutObject(client: AWSClient, request: S3PutObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'PUT');
   req.body = request.body;
   const sha256 = request.contentSha256
     ? (typeof request.contentSha256 === 'string' ? request.contentSha256 : '')
     : 'UNSIGNED-PAYLOAD';
   req.headers['x-amz-content-sha256'] = sha256;
-  return cancelBody(await request.client.execute(req));
+  return cancelBody(await client.execute(req));
 }
 
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
-export async function S3DeleteObject(request: S3DeleteObjectRequest): Promise<Response> {
+export async function S3DeleteObject(client: AWSClient, request: S3DeleteObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'DELETE');
-  return cancelBody(await request.client.execute(req));
+  return cancelBody(await client.execute(req));
 }
 // todo: if-match, x-amz-if-match-last-modified-time, x-amz-if-match-size
 
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjects.html
-export async function S3ListObjects(request: S3ListObjectsRequest): Promise<ListObjectResult> {
+export async function S3ListObjects(client: AWSClient, request: S3ListObjectsRequest): Promise<ListObjectResult> {
   const req = S3BaseOptions(request, 'GET');
   // todo: more clean here, URI encoding
   if (request.prefix) req.queryParameters['prefix'] = request.prefix;
   if (request.delimiter) req.queryParameters['delimiter'] = request.delimiter;
-  const response = await request.client.execute(req);
+  const response = await client.execute(req);
   return parseListObjects(await response.text());
 }
 
@@ -161,10 +161,13 @@ export async function S3ListObjects(request: S3ListObjectsRequest): Promise<List
 //   return parseListObjects(await response.text());
 // }
 
-export async function S3CreateMultipartUpload(request: S3CreateMultipartUploadRequest): Promise<string> {
+export async function S3CreateMultipartUpload(
+  client: AWSClient,
+  request: S3CreateMultipartUploadRequest,
+): Promise<string> {
   const req = S3KeyOptions(request, 'POST');
   req.queryParameters['uploads'] = '';
-  const response = await request.client.execute(req);
+  const response = await client.execute(req);
   // Cache-Control, Content-Disposition, Content-Encoding, Content-Language, Content-Type, Expires
   // <InitiateMultipartUploadResult>
   //  <Bucket>string</Bucket>
@@ -177,33 +180,33 @@ export async function S3CreateMultipartUpload(request: S3CreateMultipartUploadRe
   return uploadId;
 }
 
-export async function S3UploadPart(request: S3UploadPartRequest) {
+export async function S3UploadPart(client: AWSClient, request: S3UploadPartRequest) {
   const req = S3KeyOptions(request, 'PUT');
   req.queryParameters['uploadId'] = request.uploadId;
   req.queryParameters['partNumber'] = request.partNumber.toString();
   req.body = request.body;
   // req.headers['x-amz-content-sha256'] = 'UNSIGNED-PAYLOAD';
-  return cancelBody(await request.client.execute(req));
+  return cancelBody(await client.execute(req));
 }
 
 // <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 //   <Part><ETag>string</ETag><PartNumber>integer</PartNumber></Part>
 // </CompleteMultipartUpload>
-export async function S3CompleteMultipartUpload(request: S3CompleteMultipartUploadRequest) {
+export async function S3CompleteMultipartUpload(client: AWSClient, request: S3CompleteMultipartUploadRequest) {
   const req = S3KeyOptions(request, 'POST');
   req.queryParameters['uploadId'] = request.uploadId;
   req.body = request.body;
-  return cancelBody(await request.client.execute(req));
+  return cancelBody(await client.execute(req));
 }
 
-export async function S3AbortMultipartUpload(request: S3AbortMultipartUploadRequest) {
+export async function S3AbortMultipartUpload(client: AWSClient, request: S3AbortMultipartUploadRequest) {
   const req = S3KeyOptions(request, 'DELETE');
   req.queryParameters['uploadId'] = request.uploadId;
-  return await request.client.execute(req);
+  return await client.execute(req);
 }
 
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html
-export async function S3ListBuckets(request: S3ListBucketsRequest): Promise<S3BucketListResult> {
+export async function S3ListBuckets(client: AWSClient, request: S3ListBucketsRequest): Promise<S3BucketListResult> {
   const req: AWSRequest = {
     method: 'GET',
     checkResponse: request.checkResponse ?? true,
@@ -215,6 +218,6 @@ export async function S3ListBuckets(request: S3ListBucketsRequest): Promise<S3Bu
     service: 's3',
   };
   addQueryParameters(request, req, S3ListBucketsParameters);
-  const response = await request.client.execute(req);
+  const response = await client.execute(req);
   return parseListBuckets(await response.text());
 }
