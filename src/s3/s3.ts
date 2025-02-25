@@ -1,6 +1,6 @@
 import type { AWSBaseRequest, AWSRequest, HTTPMethod } from '../awsTypes.ts';
 import type { AWSClient } from '../client.ts';
-import { addQueryParameters } from '../utilities.ts';
+import { addQueryParameters, type Prettify } from '../utilities.ts';
 import { parseListBuckets } from './ListBucketsParser.ts';
 import { parseListObjects } from './ListObjectParser.ts';
 import type { ListObjectResult, S3BucketListResult } from './types.ts';
@@ -21,25 +21,23 @@ type AWSIfOptions = {
   ifUnmodifiedSince?: string;
 };
 
-export type S3CopyObjectRequest = AWSS3KeyRequest & { sourceBucket: string; sourceKey: string };
+export type S3CopyObjectRequest = Prettify<AWSS3KeyRequest & { sourceBucket: string; sourceKey: string }>;
 
-export type S3DeleteObjectRequest = AWSS3KeyRequest;
-export type S3GetObjectRequest = AWSS3KeyRequest & AWSIfOptions;
-export type S3HeadObjectRequest = AWSS3KeyRequest & AWSIfOptions;
-export type S3PutObjectRequest = AWSS3KeyRequest & { body: Uint8Array; contentSha256?: string | true };
+export type S3DeleteObjectRequest = Prettify<AWSS3KeyRequest>;
+export type S3GetObjectRequest = Prettify<AWSS3KeyRequest & AWSIfOptions>;
+export type S3HeadObjectRequest = Prettify<AWSS3KeyRequest & AWSIfOptions>;
+export type S3PutObjectRequest = Prettify<AWSS3KeyRequest & { body: Uint8Array; contentSha256?: string | true }>;
 
-export type S3ListObjectsRequest = AWSS3BaseRequest & { prefix?: string; delimiter?: string };
+export type S3ListObjectsRequest = Prettify<AWSS3BaseRequest & { prefix?: string; delimiter?: string }>;
 
-export type S3CreateMultipartUploadRequest = AWSS3KeyRequest;
-export type S3CompleteMultipartUploadRequest = AWSS3KeyRequest & { uploadId: string; body: Uint8Array };
-export type S3AbortMultipartUploadRequest = AWSS3KeyRequest & { uploadId: string };
-export type S3UploadPartRequest = AWSS3KeyRequest & { uploadId: string; partNumber: number; body: Uint8Array };
+export type S3CreateMultipartUploadRequest = Prettify<AWSS3KeyRequest>;
+export type S3CompleteMultipartUploadRequest = Prettify<AWSS3KeyRequest & { uploadId: string; body: Uint8Array }>;
+export type S3AbortMultipartUploadRequest = Prettify<AWSS3KeyRequest & { uploadId: string }>;
+export type S3UploadPartRequest = Prettify<AWSS3KeyRequest & { uploadId: string; partNumber: number; body: Uint8Array }>;
 
 const S3ListBucketsParameters = ['bucketRegion', 'continuationToken', 'maxBuckets', 'prefix'] as const;
 
-export type S3ListBucketsRequest =
-  & AWSBaseRequest
-  & Partial<{ [K in (typeof S3ListBucketsParameters)[number]]: string }>;
+export type S3ListBucketsRequest = Prettify<AWSBaseRequest & Partial<{ [K in (typeof S3ListBucketsParameters)[number]]: string }>>;
 
 // Request building
 const S3KeyOptions = (request: AWSS3KeyRequest, method: HTTPMethod): AWSRequest => {
