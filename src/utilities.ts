@@ -40,4 +40,4 @@ const xmlEscapeMap = {
 
 export const xmlEscape = (str: string) => str.replace(/[<>&'"]/g, (c) => xmlEscapeMap[c as keyof typeof xmlEscapeMap]);
 
-export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+export type Prettify<T> = { [K in keyof T]: T[K] } & unknown;

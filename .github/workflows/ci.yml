@@ -30,4 +30,3 @@ jobs:
 
       - name: Type check
         run: deno check ./src/mod.ts
-        

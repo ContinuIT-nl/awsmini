@@ -8,6 +8,7 @@ import {
   S3ListBuckets,
   S3ListObjects,
   S3MultipartUpload,
+  S3MultipartUploadStream,
   S3PutObject,
 } from '../src/mod.ts';
 import { assert, assertEquals, assertIsError, assertThrows } from '@std/assert';
@@ -213,10 +214,11 @@ Deno.test('multipartUpload', async () => {
   await S3MultipartUpload(client, {
     bucket,
     key: 'hello/big',
-    nextPart: (partNumber: number) => ({
-      body: body.slice((partNumber - 1) * _10MB_, partNumber * _10MB_),
-      isFinalPart: partNumber === 5,
-    }),
+    nextPart: (partNumber: number) =>
+      Promise.resolve({
+        body: body.slice((partNumber - 1) * _10MB_, partNumber * _10MB_),
+        isFinalPart: partNumber === 5,
+      }),
   });
   const response = await S3HeadObject(client, { bucket, key: 'hello/big' });
   assert(response.ok, 'S3HeadObject failed');
@@ -231,13 +233,65 @@ Deno.test('multipartUpload - tooSmall', async () => {
     await S3MultipartUpload(client, {
       bucket,
       key: 'hello/big-too-small',
-      nextPart: (partNumber: number) => ({
-        body: body.slice((partNumber - 1) * _1MB_, partNumber * _1MB_),
-        isFinalPart: partNumber === 5,
-      }),
+      nextPart: (partNumber: number) => {
+        return Promise.resolve({
+          body: body.slice((partNumber - 1) * _1MB_, partNumber * _1MB_),
+          isFinalPart: partNumber === 5,
+        });
+      },
     });
   } catch (error) {
     assertIsError(error, Error);
     assertEquals(error.message, 'Part is too small');
   }
+});
+
+Deno.test('multipartUploadStream', async () => {
+  const _200KB_ = 200 * 1024;
+  const _10MB_ = 10 * 1024 * 1024;
+  const totalSize = 5 * _10MB_; // 50MB total
+  const body = new Uint8Array(totalSize);
+
+  // Fill the array with deterministic data
+  for (let i = 0; i < body.length; i++) {
+    body[i] = (i + i >> 16) % 256;
+  }
+
+  // Create a ReadableStream from the body
+  const stream = new ReadableStream({
+    start(controller) {
+      // Send data in chunks of 200KB
+      for (let offset = 0; offset < totalSize; offset += _200KB_) {
+        const chunk = body.slice(offset, Math.min(offset + _200KB_, totalSize));
+        controller.enqueue(chunk);
+      }
+      controller.close();
+    },
+  });
+
+  // Upload the stream
+  await S3MultipartUploadStream(client, {
+    bucket,
+    key: 'hello/stream-upload',
+    stream,
+  });
+
+  // Download the uploaded file
+  const downloadedData = await S3GetObject(client, {
+    bucket,
+    key: 'hello/stream-upload',
+  });
+
+  // Verify the content
+  assertEquals(downloadedData.length, body.length, 'Downloaded data length does not match uploaded data length');
+
+  // Check that the content matches
+  let allMatch = true;
+  for (let i = 0; i < body.length; i++) {
+    if (body[i] !== downloadedData[i]) {
+      allMatch = false;
+      break;
+    }
+  }
+  assert(allMatch, 'Downloaded data does not match uploaded data');
 });

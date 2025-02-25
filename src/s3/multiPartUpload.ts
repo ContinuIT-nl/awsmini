@@ -1,11 +1,18 @@
 import type { AWSClient } from '../client.ts';
-import { xmlEscape } from '../utilities.ts';
+import { type Prettify, xmlEscape } from '../utilities.ts';
 import { S3AbortMultipartUpload, S3CompleteMultipartUpload, S3CreateMultipartUpload, S3UploadPart } from './s3.ts';
 import type { S3CreateMultipartUploadRequest } from './s3.ts';
 
-export type S3MultipartUploadRequest = S3CreateMultipartUploadRequest & {
-  nextPart: (partNumber: number) => { body: Uint8Array; isFinalPart: boolean };
+export type S3MultipartUploadPart = {
+  body: Uint8Array;
+  isFinalPart: boolean;
 };
+
+export type S3MultipartUploadRequest = Prettify<
+  S3CreateMultipartUploadRequest & {
+    nextPart: (partNumber: number) => Promise<S3MultipartUploadPart>;
+  }
+>;
 
 // todo: own error type
 // todo: streaming variant
@@ -35,7 +42,7 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
     ];
     // The parts list must be specified in order by part number.
     for (let partNumber = 1;;) {
-      const { body, isFinalPart } = request.nextPart(partNumber);
+      const { body, isFinalPart } = await request.nextPart(partNumber);
       // Parts (except the last one) should be at least 5MB in size (EntityTooSmall)
       if (!isFinalPart && (body.byteLength < 5 * 1024 * 1024)) throw new Error('Part is too small');
       const uploadRequest = await S3UploadPart(client, {
@@ -73,4 +80,72 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
     });
     throw error;
   }
+}
+
+export type S3MultipartUploadStreamRequest = Prettify<
+  Omit<S3MultipartUploadRequest, 'nextPart'> & { stream: ReadableStream<Uint8Array> }
+>;
+
+/**
+ * Uploads a stream to S3 using multipart upload.
+ * Reads the stream in chunks of 10MB and uploads each chunk as a part.
+ *
+ * @param client The AWS client
+ * @param request The multipart upload request with a stream instead of a nextPart callback
+ * @returns A promise that resolves when the upload is complete
+ */
+export function S3MultipartUploadStream(client: AWSClient, request: S3MultipartUploadStreamRequest): Promise<void> {
+  const _10MB_ = 10 * 1024 * 1024;
+  const reader = request.stream.getReader();
+
+  let buffer: Uint8Array = new Uint8Array(0);
+  let isStreamDone = false;
+
+  return S3MultipartUpload(client, {
+    ...request,
+    nextPart: async (_partNumber: number) => {
+      // If we have at least 10MB in the buffer or the stream is done, return a part
+      while (buffer.byteLength < _10MB_ && !isStreamDone) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          isStreamDone = true;
+          break;
+        }
+
+        if (value) {
+          // Combine existing buffer with new chunk
+          const newBuffer = new Uint8Array(buffer.byteLength + value.byteLength);
+          newBuffer.set(buffer);
+          newBuffer.set(value, buffer.byteLength);
+          buffer = newBuffer;
+        }
+      }
+
+      // Determine if this is the final part
+      const isFinalPart = isStreamDone;
+
+      // For non-final parts, ensure we have at least 5MB (S3 requirement)
+      if (!isFinalPart && buffer.byteLength < 5 * 1024 * 1024) {
+        throw new Error('Part is too small');
+      }
+
+      let partBuffer: Uint8Array;
+
+      if (isFinalPart) {
+        // For the final part, use whatever is left in the buffer
+        partBuffer = buffer;
+        buffer = new Uint8Array(0);
+      } else {
+        // For non-final parts, use exactly 10MB
+        partBuffer = buffer.slice(0, _10MB_);
+        buffer = buffer.slice(_10MB_);
+      }
+
+      return {
+        body: partBuffer,
+        isFinalPart,
+      };
+    },
+  });
 }

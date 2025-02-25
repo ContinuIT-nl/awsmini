@@ -33,11 +33,15 @@ export type S3ListObjectsRequest = Prettify<AWSS3BaseRequest & { prefix?: string
 export type S3CreateMultipartUploadRequest = Prettify<AWSS3KeyRequest>;
 export type S3CompleteMultipartUploadRequest = Prettify<AWSS3KeyRequest & { uploadId: string; body: Uint8Array }>;
 export type S3AbortMultipartUploadRequest = Prettify<AWSS3KeyRequest & { uploadId: string }>;
-export type S3UploadPartRequest = Prettify<AWSS3KeyRequest & { uploadId: string; partNumber: number; body: Uint8Array }>;
+export type S3UploadPartRequest = Prettify<
+  AWSS3KeyRequest & { uploadId: string; partNumber: number; body: Uint8Array }
+>;
 
 const S3ListBucketsParameters = ['bucketRegion', 'continuationToken', 'maxBuckets', 'prefix'] as const;
 
-export type S3ListBucketsRequest = Prettify<AWSBaseRequest & Partial<{ [K in (typeof S3ListBucketsParameters)[number]]: string }>>;
+export type S3ListBucketsRequest = Prettify<
+  AWSBaseRequest & Partial<{ [K in (typeof S3ListBucketsParameters)[number]]: string }>
+>;
 
 // Request building
 const S3KeyOptions = (request: AWSS3KeyRequest, method: HTTPMethod): AWSRequest => {
