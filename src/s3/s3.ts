@@ -1,11 +1,10 @@
-import type { AWSBaseRequest, AWSRequest, HTTPMethod } from '../awsTypes.ts';
+import type { AWSBaseRequest, AWSRequest, HTTPMethod } from '../misc/awsTypes.ts';
 import type { AWSClient } from '../client/client.ts';
-import { addQueryParameters, type Prettify } from '../utilities.ts';
+import { AwsminiS3Error } from '../misc/AwsminiError.ts';
+import { addQueryParameters, type Prettify } from '../misc/utilities.ts';
 import { parseListBuckets } from './ListBucketsParser.ts';
 import { parseListObjects } from './ListObjectParser.ts';
 import type { ListObjectResult, S3BucketListResult } from './types.ts';
-
-// todo: error types
 
 // types
 type AWSS3BaseRequest = AWSBaseRequest & { bucket: string };
@@ -45,7 +44,7 @@ export type S3ListBucketsRequest = Prettify<
 
 // Request building
 const S3KeyOptions = (request: AWSS3KeyRequest, method: HTTPMethod): AWSRequest => {
-  if (!request.key) throw new Error('Key is required and should be at least one character long');
+  if (!request.key) throw new AwsminiS3Error('Key is required and should be at least one character long');
   return {
     method,
     subhost: request.bucket,
@@ -73,13 +72,17 @@ const S3BaseOptions = (request: AWSS3BaseRequest, method: HTTPMethod): AWSReques
 
 const AWSAddIfOptions = (req: AWSRequest, options: AWSIfOptions) => {
   // Validate options
-  if (options.ifMatch && !options.ifNoneMatch) throw new Error('ifMatch and ifNoneMatch cannot be used together');
-  if (options.ifNoneMatch && !options.ifMatch) throw new Error('ifNoneMatch and ifMatch cannot be used together');
+  if (options.ifMatch && !options.ifNoneMatch) {
+    throw new AwsminiS3Error('ifMatch and ifNoneMatch cannot be used together');
+  }
+  if (options.ifNoneMatch && !options.ifMatch) {
+    throw new AwsminiS3Error('ifNoneMatch and ifMatch cannot be used together');
+  }
   if (options.ifModifiedSince && !options.ifUnmodifiedSince) {
-    throw new Error('ifModifiedSince and ifUnmodifiedSince cannot be used together');
+    throw new AwsminiS3Error('ifModifiedSince and ifUnmodifiedSince cannot be used together');
   }
   if (options.ifUnmodifiedSince && !options.ifModifiedSince) {
-    throw new Error('ifUnmodifiedSince and ifModifiedSince cannot be used together');
+    throw new AwsminiS3Error('ifUnmodifiedSince and ifModifiedSince cannot be used together');
   }
 
   // Add options
@@ -178,11 +181,11 @@ export async function S3CreateMultipartUpload(
   // </InitiateMultipartUploadResult> --> extract uploadId
   const text = await response.text();
   const uploadId = text.match(/<UploadId>(.*?)<\/UploadId>/)?.[1];
-  if (!uploadId) throw new Error('UploadId not found');
+  if (!uploadId) throw new AwsminiS3Error('UploadId not found');
   return uploadId;
 }
 
-export async function S3UploadPart(client: AWSClient, request: S3UploadPartRequest) {
+export async function S3UploadPart(client: AWSClient, request: S3UploadPartRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'PUT');
   req.queryParameters['uploadId'] = request.uploadId;
   req.queryParameters['partNumber'] = request.partNumber.toString();
@@ -194,14 +197,20 @@ export async function S3UploadPart(client: AWSClient, request: S3UploadPartReque
 // <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 //   <Part><ETag>string</ETag><PartNumber>integer</PartNumber></Part>
 // </CompleteMultipartUpload>
-export async function S3CompleteMultipartUpload(client: AWSClient, request: S3CompleteMultipartUploadRequest) {
+export async function S3CompleteMultipartUpload(
+  client: AWSClient,
+  request: S3CompleteMultipartUploadRequest,
+): Promise<Response> {
   const req = S3KeyOptions(request, 'POST');
   req.queryParameters['uploadId'] = request.uploadId;
   req.body = request.body;
   return cancelBody(await client.execute(req));
 }
 
-export async function S3AbortMultipartUpload(client: AWSClient, request: S3AbortMultipartUploadRequest) {
+export async function S3AbortMultipartUpload(
+  client: AWSClient,
+  request: S3AbortMultipartUploadRequest,
+): Promise<Response> {
   const req = S3KeyOptions(request, 'DELETE');
   req.queryParameters['uploadId'] = request.uploadId;
   return await client.execute(req);
