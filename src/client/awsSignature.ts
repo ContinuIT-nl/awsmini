@@ -1,18 +1,18 @@
-import type { AWSConfig, AWSFullRequest } from './awsTypes.ts';
-import { bufferToHex, emptyHashSha256, encodeRfc3986, hashSha256, hmacSha256 } from './utilities.ts';
+import type { AWSConfig, AWSFullRequest } from '../awsTypes.ts';
+import { bufferToHex, emptyHashSha256, encodeRfc3986, hashSha256, hmacSha256 } from '../utilities.ts';
 
 const encoder = new TextEncoder();
 
-const singingKeyCache = new Map<string, ArrayBuffer>(); // todo: use a LRU cache
+const signingKeyCache = new Map<string, ArrayBuffer>(); // todo: use a LRU cache
 
 const getSigningKey = async (secretAccessKey: string, date: string, region: string, service: string) => {
   const cacheKey = `${secretAccessKey}-${date}-${region}-${service}`;
-  if (singingKeyCache.has(cacheKey)) return singingKeyCache.get(cacheKey)!;
+  if (signingKeyCache.has(cacheKey)) return signingKeyCache.get(cacheKey)!;
   const dateKey = await hmacSha256(encoder.encode(`AWS4${secretAccessKey}`), encoder.encode(date));
   const dateRegionKey = await hmacSha256(dateKey, encoder.encode(region));
   const dateRegionServiceKey = await hmacSha256(dateRegionKey, encoder.encode(service));
   const signingKey = await hmacSha256(dateRegionServiceKey, encoder.encode('aws4_request'));
-  singingKeyCache.set(cacheKey, signingKey);
+  signingKeyCache.set(cacheKey, signingKey);
   return signingKey;
 };
 

@@ -1,4 +1,4 @@
-import type { AWSClient } from '../client.ts';
+import type { AWSClient } from '../client/client.ts';
 import { type Prettify, xmlEscape } from '../utilities.ts';
 import { S3AbortMultipartUpload, S3CompleteMultipartUpload, S3CreateMultipartUpload, S3UploadPart } from './s3.ts';
 import type { S3CreateMultipartUploadRequest } from './s3.ts';
@@ -15,8 +15,8 @@ export type S3MultipartUploadRequest = Prettify<
 >;
 
 // todo: own error type
-// todo: streaming variant
-//
+// todo: streaming variant needs some work
+
 /**
  * Initiates a multipart upload to S3, uploads each part, and completes the upload.
  * If any part fails to upload, the multipart upload is aborted.
@@ -124,11 +124,6 @@ export function S3MultipartUploadStream(client: AWSClient, request: S3MultipartU
 
       // Determine if this is the final part
       const isFinalPart = isStreamDone;
-
-      // For non-final parts, ensure we have at least 5MB (S3 requirement)
-      if (!isFinalPart && buffer.byteLength < 5 * 1024 * 1024) {
-        throw new Error('Part is too small');
-      }
 
       let partBuffer: Uint8Array;
 

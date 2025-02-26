@@ -1,8 +1,8 @@
 // Base part
 
-export { AWSClient } from './client.ts';
+export { AWSClient } from './client/client.ts';
 export type { AWSFullRequest, AWSRequest } from './awsTypes.ts';
-export type { ClientConfig } from './clientConfig.ts';
+export type { ClientConfig } from './client/clientConfig.ts';
 
 // S3
 
@@ -14,6 +14,10 @@ export {
   S3ListBuckets,
   S3ListObjects,
   S3PutObject,
+  S3AbortMultipartUpload,
+  S3CompleteMultipartUpload,
+  S3CreateMultipartUpload,
+  S3UploadPart,
 } from './s3/s3.ts';
 
 export type {

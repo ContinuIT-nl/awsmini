@@ -1,5 +1,5 @@
 import type { AWSBaseRequest, AWSRequest, HTTPMethod } from '../awsTypes.ts';
-import type { AWSClient } from '../client.ts';
+import type { AWSClient } from '../client/client.ts';
 import { addQueryParameters, type Prettify } from '../utilities.ts';
 import { parseListBuckets } from './ListBucketsParser.ts';
 import { parseListObjects } from './ListObjectParser.ts';

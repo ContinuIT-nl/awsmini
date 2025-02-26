@@ -1,5 +1,5 @@
 import { signRequest } from './awsSignature.ts';
-import type { AWSConfig, AWSFullRequest, AWSRequest } from './awsTypes.ts';
+import type { AWSConfig, AWSFullRequest, AWSRequest } from '../awsTypes.ts';
 import type { ClientConfig } from './clientConfig.ts';
 import * as process from 'node:process';
 
