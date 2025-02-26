@@ -1,6 +1,5 @@
 import {
   AWSClient,
-  type ClientConfig,
   clientConfigEnv,
   S3CopyObject,
   S3DeleteObject,
@@ -15,13 +14,7 @@ import {
 import { assert, assertEquals, assertIsError, assertThrows } from '@std/assert';
 import * as process from 'node:process';
 
-const bucket = process.env.TEST_BUCKET;
-const bucket2 = process.env.TEST_BUCKET2 ?? '';
-
-if (!bucket) {
-  throw new Error('TEST_BUCKET is not set. Please provide access to a test bucket in the environment variables.');
-}
-
+// Helpers
 const headersToString = (headers: Headers) =>
   [...headers.entries()].map(([key, value]) => `${key}: ${value}`).join('\n');
 
@@ -37,20 +30,24 @@ const logFetch = async (input: string | URL | globalThis.Request, init?: Request
   return response;
 };
 
-const config: ClientConfig = clientConfigEnv({ fetch: logFetch });
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const config2: ClientConfig = {
+// Clients
+const clientR2 = new AWSClient(clientConfigEnv({ fetch: logFetch }));
+const clientAWS = new AWSClient({
   endpoint: '',
   accessKeyId: process.env.AWS2_ACCESS_KEY,
   secretAccessKey: process.env.AWS2_SECRET_KEY,
   region: process.env.AWS2_REGION,
-  fetch: logFetch
-};
+  fetch: logFetch,
+});
 
-const clientR2 = new AWSClient(config);
-const clientAWS = new AWSClient(config2);
+const bucket = process.env.TEST_BUCKET;
+const bucket2 = process.env.TEST_BUCKET2 ?? '';
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+if (!bucket) {
+  throw new Error('TEST_BUCKET is not set. Please provide access to a test bucket in the environment variables.');
+}
 
 Deno.test('S3PutObject', async () => {
   const result = await S3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(0) });
