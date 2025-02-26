@@ -1,22 +1,7 @@
 import { signRequest } from './awsSignature.ts';
 import type { AWSConfig, AWSFullRequest, AWSRequest } from '../misc/awsTypes.ts';
 import type { ClientConfig } from './clientConfig.ts';
-import * as process from 'node:process';
 import { AwsminiError, AwsminiRequestError } from '../misc/AwsminiError.ts';
-
-type Environment = Record<string, string>;
-
-// Only access env once and only if needed.
-let cacheEnv: Environment | undefined;
-const env = () => cacheEnv ?? (cacheEnv = process.env as Environment);
-
-function parseEndpoint(endpoint: string | undefined) {
-  if (!endpoint) {
-    return { protocol: 'https', host: '' };
-  }
-  const url = new URL(endpoint);
-  return { protocol: url.protocol.replace(':', ''), host: url.host };
-}
 
 export class AWSClient {
   private clientConfig: ClientConfig;
@@ -33,22 +18,22 @@ export class AWSClient {
       const clientConfig = this.clientConfig;
       // todo: support extensions for loading from .awsconfig, etc.
       // IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
-
-      const region = clientConfig.region ?? env().AWS_REGION ?? env().AWS_DEFAULT_REGION ?? env().AMAZON_REGION;
+      const region = clientConfig.region;
       if (region === undefined) throw new AwsminiError('Region is not set');
-
-      const accessKeyId = clientConfig.accessKeyId ?? env().AWS_ACCESS_KEY_ID ?? env().AWS_ACCESS_KEY;
+      const accessKeyId = clientConfig.accessKeyId;
       if (accessKeyId === undefined) throw new AwsminiError('Access key ID is not set');
-
-      const secretAccessKey = clientConfig.secretAccessKey ?? env().AWS_SECRET_ACCESS_KEY ?? env().AWS_SECRET_KEY;
+      const secretAccessKey = clientConfig.secretAccessKey;
       if (secretAccessKey === undefined) throw new AwsminiError('Secret access key is not set');
+      const endpoint = clientConfig.endpoint;
+      const url = endpoint ? new URL(endpoint) : undefined;
 
       const result = {
         region,
         accessKeyId,
         secretAccessKey,
-        sessionToken: clientConfig.sessionToken ?? env().AWS_SESSION_TOKEN,
-        ...parseEndpoint(clientConfig.endpoint ?? env().AWS_ENDPOINT_URL),
+        sessionToken: clientConfig.sessionToken,
+        protocol: url ? url.protocol.replace(':', '') : 'https',
+        host: url ? url.host : '',
         // maxRetries etc
       };
       this.config = result;
