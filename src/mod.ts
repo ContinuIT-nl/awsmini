@@ -11,9 +11,7 @@ export { clientConfigFile } from './client/clientConfigFile.ts';
 export {
   S3AbortMultipartUpload,
   S3CompleteMultipartUpload,
-  S3CopyObject,
   S3CreateMultipartUpload,
-  S3DeleteObject,
   S3GetObject,
   S3HeadObject,
   S3ListBuckets,
@@ -25,15 +23,16 @@ export {
 export type {
   S3AbortMultipartUploadRequest,
   S3CompleteMultipartUploadRequest,
-  S3CopyObjectRequest,
   S3CreateMultipartUploadRequest,
-  S3DeleteObjectRequest,
   S3GetObjectRequest,
   S3HeadObjectRequest,
   S3ListBucketsRequest,
   S3ListObjectsRequest,
   S3PutObjectRequest,
 } from './s3/s3.ts';
+
+export { s3CopyObject, type S3CopyObjectRequest } from './s3/s3CopyObject.ts';
+export { s3DeleteObject, type S3DeleteObjectRequest } from './s3/s3DeleteObject.ts';
 
 export type { ListObjectResult, S3Bucket, S3BucketListResult, S3Object, S3Owner } from './s3/types.ts';
 

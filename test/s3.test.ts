@@ -1,8 +1,8 @@
 import {
   AWSClient,
   clientConfigEnv,
-  S3CopyObject,
-  S3DeleteObject,
+  s3CopyObject,
+  s3DeleteObject,
   S3GetObject,
   S3HeadObject,
   S3ListBuckets,
@@ -93,18 +93,18 @@ Deno.test('S3PutObject - special characters', async () => {
     body: new Uint8Array(100),
   });
   assert(result.ok, 'S3PutObject failed');
-  const result2 = await S3DeleteObject(clientR2, { bucket, key: '2025-02-27T01:15:19.952Z.html' });
-  assert(result2.ok, 'S3DeleteObject failed');
+  const result2 = await s3DeleteObject(clientR2, { bucket, key: '2025-02-27T01:15:19.952Z.html' });
+  assert(result2.ok, 's3DeleteObject failed');
 });
 
 Deno.test('S3CopyObject abort', async () => {
   const result = await S3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(100) });
   assert(result.ok, 'S3PutObject failed');
 
-  const result5 = await S3DeleteObject(clientR2, { bucket, key: 'hello/again' });
-  assert(result5.ok, 'S3DeleteObject failed');
+  const result5 = await s3DeleteObject(clientR2, { bucket, key: 'hello/again' });
+  assert(result5.ok, 's3DeleteObject failed');
 
-  const result2 = await S3CopyObject(clientR2, {
+  const result2 = await s3CopyObject(clientR2, {
     bucket,
     key: 'hello/again',
     sourceBucket: bucket,
@@ -116,23 +116,23 @@ Deno.test('S3CopyObject abort', async () => {
   assert(result3.ok, 'S3HeadObject failed');
   assertEquals(result3.headers.get('content-length'), '100');
 
-  const result4 = await S3DeleteObject(clientR2, { bucket, key: 'hello/again' });
-  assert(result4.ok, 'S3DeleteObject failed');
+  const result4 = await s3DeleteObject(clientR2, { bucket, key: 'hello/again' });
+  assert(result4.ok, 's3DeleteObject failed');
 });
 
-Deno.test('S3DeleteObject', async () => {
+Deno.test('s3DeleteObject', async () => {
   // Make sure an object exists
   const result1 = await S3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(100) });
   assert(result1.ok, 'S3PutObject failed');
 
   // Delete the object
-  const result2 = await S3DeleteObject(clientR2, { bucket, key: 'hello/world' });
-  assert(result2.ok, 'S3DeleteObject failed');
+  const result2 = await s3DeleteObject(clientR2, { bucket, key: 'hello/world' });
+  assert(result2.ok, 's3DeleteObject failed');
 });
 
-Deno.test('S3DeleteObject nonexisting', async () => {
-  const result = await S3DeleteObject(clientR2, { bucket, key: 'nonexisting/key' });
-  assert(result.ok, 'S3DeleteObject nonexisting failed');
+Deno.test('s3DeleteObject nonexisting', async () => {
+  const result = await s3DeleteObject(clientR2, { bucket, key: 'nonexisting/key' });
+  assert(result.ok, 's3DeleteObject nonexisting failed');
 });
 
 Deno.test('S3HeadObject', async () => {

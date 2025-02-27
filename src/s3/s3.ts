@@ -7,9 +7,9 @@ import { parseListObjects } from './ListObjectParser.ts';
 import type { ListObjectResult, S3BucketListResult } from './types.ts';
 
 // types
-type AWSS3BaseRequest = AWSBaseRequest & { bucket: string };
+export type AWSS3BucketRequest = AWSBaseRequest & { bucket: string };
 
-type AWSS3KeyRequest = AWSS3BaseRequest & { key: string };
+export type AWSS3KeyRequest = AWSS3BucketRequest & { key: string };
 
 // Precondition Header Fields
 // See https://datatracker.ietf.org/doc/html/rfc7232#section-3
@@ -20,14 +20,11 @@ type AWSIfOptions = {
   ifUnmodifiedSince?: string;
 };
 
-export type S3CopyObjectRequest = Prettify<AWSS3KeyRequest & { sourceBucket: string; sourceKey: string }>;
-
-export type S3DeleteObjectRequest = Prettify<AWSS3KeyRequest>;
 export type S3GetObjectRequest = Prettify<AWSS3KeyRequest & AWSIfOptions>;
 export type S3HeadObjectRequest = Prettify<AWSS3KeyRequest & AWSIfOptions>;
 export type S3PutObjectRequest = Prettify<AWSS3KeyRequest & { body: Uint8Array; contentSha256?: string | true }>;
 
-export type S3ListObjectsRequest = Prettify<AWSS3BaseRequest & { prefix?: string; delimiter?: string }>;
+export type S3ListObjectsRequest = Prettify<AWSS3BucketRequest & { prefix?: string; delimiter?: string }>;
 
 export type S3CreateMultipartUploadRequest = Prettify<AWSS3KeyRequest>;
 export type S3CompleteMultipartUploadRequest = Prettify<AWSS3KeyRequest & { uploadId: string; body: Uint8Array }>;
@@ -43,7 +40,7 @@ export type S3ListBucketsRequest = Prettify<
 >;
 
 // Request building
-const S3KeyOptions = (request: AWSS3KeyRequest, method: HTTPMethod): AWSRequest => {
+export const S3KeyOptions = (request: AWSS3KeyRequest, method: HTTPMethod): AWSRequest => {
   if (!request.key) throw new AwsminiS3Error('Key is required and should be at least one character long');
   return {
     method,
@@ -57,7 +54,7 @@ const S3KeyOptions = (request: AWSS3KeyRequest, method: HTTPMethod): AWSRequest 
   };
 };
 
-const S3BaseOptions = (request: AWSS3BaseRequest, method: HTTPMethod): AWSRequest => ({
+export const S3BaseOptions = (request: AWSS3BucketRequest, method: HTTPMethod): AWSRequest => ({
   method,
   subhost: request.bucket,
   path: '/',
@@ -94,35 +91,10 @@ const AWSAddIfOptions = (req: AWSRequest, options: AWSIfOptions) => {
 
 // Response handling
 
-const cancelBody = (response: Response) => {
+export const cancelBody = (response: Response) => {
   response.body?.cancel();
   return response;
 };
-
-/**
- * Copy an object from one bucket to another
- *
- * @param client - An AWSClient instance
- * @param request - A S3CopyObjectRequest instance
- * @returns The Response object containing the statuscode and headers
- *
- * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
- *
- * @example
- * ```ts
- * const response = await S3CopyObject(client, {
- *   bucket: 'sourceBucket',
- *   key: 'sourceKey',
- *   sourceBucket: 'targetBucket',
- *   sourceKey: 'targetKey' });
- * console.log(response.ok, response.headers);
- * ```
- */
-export async function S3CopyObject(client: AWSClient, request: S3CopyObjectRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'PUT');
-  req.headers['x-amz-copy-source'] = `${request.sourceBucket}/${request.sourceKey}`;
-  return cancelBody(await client.execute(req));
-}
 
 /**
  * Get an object from S3
@@ -198,28 +170,6 @@ export async function S3PutObject(client: AWSClient, request: S3PutObjectRequest
   req.headers['x-amz-content-sha256'] = sha256;
   return cancelBody(await client.execute(req));
 }
-
-/**
- * Delete an object from S3
- *
- * @param client - An AWSClient instance
- * @param request - A S3DeleteObjectRequest instance
- * @returns The Response object containing the statuscode and headers
- *
- * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
- *
- * @example
- * ```ts
- * const response = await S3DeleteObject(client, { bucket: 'bucket', key: 'key' });
- * console.log(response.ok, response.headers);
- * ```
- */
-export async function S3DeleteObject(client: AWSClient, request: S3DeleteObjectRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'DELETE');
-  return cancelBody(await client.execute(req));
-}
-
-// todo: if-match, x-amz-if-match-last-modified-time, x-amz-if-match-size
 
 /**
  * List objects in a bucket
