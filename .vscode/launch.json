@@ -11,7 +11,7 @@
       "program": "${workspaceFolder}/test/s3.test.ts",
       "cwd": "${workspaceFolder}",
       "env": {},
-      "runtimeExecutable": "deno.EXE",
+      "runtimeExecutable": "deno.exe",
       "runtimeArgs": [
         "test",
         "--env-file=${workspaceFolder}/.env",
