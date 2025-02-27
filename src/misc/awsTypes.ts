@@ -1,10 +1,24 @@
+/**
+ * The HTTP method to use for the request.
+ * This is used internally by AWSmini.
+ */
 export type HTTPMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
+/**
+ * The service to use for the request.
+ * This is used internally by AWSmini.
+ */
+export type AWSRequestService = 's3';
+
+/**
+ * The request details used when calling `AWSClient.execute`.
+ * This is used internally by AWSmini.
+ */
 export type AWSRequest = {
   method: HTTPMethod;
   subhost: string | undefined;
   path: string;
-  service: 's3'; // todo: add the other services supported here
+  service: AWSRequestService;
   queryParameters: Record<string, string>;
   headers: Record<string, string>;
   body?: Uint8Array;

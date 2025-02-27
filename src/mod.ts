@@ -1,6 +1,6 @@
 // Base part
 
-export { AWSClient } from './client/client.ts';
+export { AWSClient } from './client/AWSClient.ts';
 export type { AWSFullRequest, AWSRequest } from './misc/awsTypes.ts';
 export type { ClientConfig } from './client/clientConfig.ts';
 export { clientConfigEnv } from './client/clientConfigEnv.ts';

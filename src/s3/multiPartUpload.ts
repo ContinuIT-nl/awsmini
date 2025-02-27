@@ -1,4 +1,4 @@
-import type { AWSClient } from '../client/client.ts';
+import type { AWSClient } from '../client/AWSClient.ts';
 import { type Prettify, xmlEscape } from '../misc/utilities.ts';
 import { S3AbortMultipartUpload, S3CompleteMultipartUpload, S3CreateMultipartUpload, S3UploadPart } from './s3.ts';
 import type { S3CreateMultipartUploadRequest } from './s3.ts';

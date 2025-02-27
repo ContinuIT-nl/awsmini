@@ -4,13 +4,43 @@ import type { ClientConfig } from './clientConfig.ts';
 import { AwsminiError, AwsminiRequestError } from '../misc/AwsminiError.ts';
 import { encodeRfc3986 } from '../misc/utilities.ts';
 
+/**
+ * AWS Client
+ *
+ * @description
+ * This class is used to make requests to AWS (and compatible) services.
+ * Given a configuration, it will sign requests and execute them.
+ *
+ * @example
+ * ```ts
+ * const client = new AWSClient({
+ *   region: 'us-east-1',
+ *   accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+ *   secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+ * });
+ * ```
+ *
+ * The configuration can be loaded from environment variables using the `clientConfigEnv` function.
+ *
+ * ```ts
+ * const client = new AWSClient(clientConfigEnv({}));
+ * ```
+ *
+ * Describe other options here
+ */
 export class AWSClient {
   private config: AWSConfig;
   private fetch: typeof fetch;
 
+  /**
+   * Constructor
+   *
+   * @param clientConfig - The configuration for the client.
+   *
+   * @throws {AwsminiError} If the region, access key ID or secret access key is not set.
+   */
   constructor(clientConfig: ClientConfig) {
-    // todo: support extensions for loading from .awsconfig, etc.
-    // IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+    // todo: Also SSO, IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
     const region = clientConfig.region;
     if (region === undefined) throw new AwsminiError('Region is not set');
     const accessKeyId = clientConfig.accessKeyId;
@@ -34,6 +64,14 @@ export class AWSClient {
     this.fetch = clientConfig.fetch ?? fetch;
   }
 
+  /**
+   * Execute a request
+   * This is used internally by AWSmini. Normally you don't need to call this method directly.
+   *
+   * @param request - The request to execute.
+   *
+   * @returns The response from the request.
+   */
   async execute(request: AWSRequest): Promise<Response> {
     const host = this.config.host || `${request.service}.${this.config.region}.amazonaws.com`;
 
@@ -52,9 +90,7 @@ export class AWSClient {
 
     const url = `${this.config.protocol}://${fullRequest.host}${fullRequest.path}${params ? '?' + params : ''}`;
 
-    const headers = Object.entries(fullRequest.headers)
-      .filter(([_key, value]) => value)
-      .map(([key, value]) => [key, value]);
+    const headers = Object.entries(fullRequest.headers).filter(([_key, value]) => value);
 
     const response = await this.fetch(url, {
       method: fullRequest.method,
