@@ -99,14 +99,46 @@ const cancelBody = (response: Response) => {
   return response;
 };
 
-/// https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
+/**
+ * Copy an object from one bucket to another
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3CopyObjectRequest instance
+ * @returns The Response object containing the statuscode and headers
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
+ * 
+ * @example
+ * ```ts
+ * const response = await S3CopyObject(client, { 
+ *   bucket: 'sourceBucket', 
+ *   key: 'sourceKey', 
+ *   sourceBucket: 'targetBucket', 
+ *   sourceKey: 'targetKey' });
+ * console.log(response.ok, response.headers);
+ * ```
+ */
 export async function S3CopyObject(client: AWSClient, request: S3CopyObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'PUT');
   req.headers['x-amz-copy-source'] = `${request.sourceBucket}/${request.sourceKey}`;
   return cancelBody(await client.execute(req));
 }
 
-/// https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
+/**
+ * Get an object from S3
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3GetObjectRequest instance
+ * @returns The Uint8Array containing the object
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
+ * 
+ * @example
+ * ```ts
+ * const response = await S3GetObject(client, { bucket: 'bucket', key: 'key' });
+ * console.log(response.byteLength);
+ * ```
+ */
 export async function S3GetObject(client: AWSClient, request: S3GetObjectRequest): Promise<Uint8Array> {
   const req = S3KeyOptions(request, 'GET');
   AWSAddIfOptions(req, request);
@@ -114,7 +146,21 @@ export async function S3GetObject(client: AWSClient, request: S3GetObjectRequest
   // todo: handle streaming, range requests, etc.
 }
 
-/// https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
+/**
+ * Get the metadata of an object from S3
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3HeadObjectRequest instance
+ * @returns The Response object containing the statuscode and headers
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
+ * 
+ * @example
+ * ```ts
+ * const response = await S3HeadObject(client, { bucket: 'bucket', key: 'key' });
+ * console.log(response.ok, response.headers);
+ * ```
+ */
 export async function S3HeadObject(client: AWSClient, request: S3HeadObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'HEAD');
   AWSAddIfOptions(req, request);
@@ -127,7 +173,22 @@ export async function S3HeadObject(client: AWSClient, request: S3HeadObjectReque
 //   x-amz-meta-s3b-last-modified: 20250124T001124Z
 //   x-amz-meta-sha256:            c61c3b9a8361985b1f4e492904d93d99a300ac727463bb7a262a8b7b57192ea7
 
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
+/**
+ * Put an object into S3
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3PutObjectRequest instance
+ * @returns The Response object containing the statuscode and headers
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
+ * 
+ * @example
+ * ```ts
+ * const body = new TextEncoder().encode('Hello, world!');
+ * const response = await S3PutObject(client, { bucket: 'bucket', key: 'key', body });
+ * console.log(response.ok, response.headers);
+ * ```
+ */
 export async function S3PutObject(client: AWSClient, request: S3PutObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'PUT');
   req.body = request.body;
@@ -138,14 +199,43 @@ export async function S3PutObject(client: AWSClient, request: S3PutObjectRequest
   return cancelBody(await client.execute(req));
 }
 
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
+/**
+ * Delete an object from S3
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3DeleteObjectRequest instance
+ * @returns The Response object containing the statuscode and headers
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
+ * 
+ * @example
+ * ```ts
+ * const response = await S3DeleteObject(client, { bucket: 'bucket', key: 'key' });
+ * console.log(response.ok, response.headers);
+ * ```
+ */
 export async function S3DeleteObject(client: AWSClient, request: S3DeleteObjectRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'DELETE');
   return cancelBody(await client.execute(req));
 }
+
 // todo: if-match, x-amz-if-match-last-modified-time, x-amz-if-match-size
 
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjects.html
+/**
+ * List objects in a bucket
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3ListObjectsRequest instance
+ * @returns The ListObjectResult object
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjects.html
+ * 
+ * @example
+ * ```ts
+ * const result = await S3ListObjects(client, { bucket: 'bucket', prefix: 'hello/' });
+ * console.log(result);
+ * ```
+ */
 export async function S3ListObjects(client: AWSClient, request: S3ListObjectsRequest): Promise<ListObjectResult> {
   const req = S3BaseOptions(request, 'GET');
   // todo: more clean here, URI encoding
@@ -166,6 +256,23 @@ export async function S3ListObjects(client: AWSClient, request: S3ListObjectsReq
 //   return parseListObjects(await response.text());
 // }
 
+/**
+ * Create a multipart upload
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3CreateMultipartUploadRequest instance
+ * @returns The uploadId
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
+ * 
+ * @example
+ * ```ts
+ * const uploadId = await S3CreateMultipartUpload(client, { bucket: 'bucket', key: 'key' });
+ * console.log(uploadId);
+ * ```
+ * 
+ * @note Use S3MultipartUploadStream or S3MultipartUpload for a higher level API to do multipart uploads.
+ */
 export async function S3CreateMultipartUpload(
   client: AWSClient,
   request: S3CreateMultipartUploadRequest,
@@ -185,6 +292,23 @@ export async function S3CreateMultipartUpload(
   return uploadId;
 }
 
+/**
+ * Upload a part of a multipart upload
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3UploadPartRequest instance
+ * @returns The Response object containing the statuscode and headers
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
+ * 
+ * @example
+ * ```ts
+ * const response = await S3UploadPart(client, { bucket: 'bucket', key: 'key', uploadId: 'uploadId', partNumber: 1, body: new Uint8Array([1, 2, 3]) });
+ * console.log(response.ok, response.headers);
+ * ```
+ * 
+ * @note Use S3MultipartUploadStream or S3MultipartUpload for a higher level API to do multipart uploads.
+ */
 export async function S3UploadPart(client: AWSClient, request: S3UploadPartRequest): Promise<Response> {
   const req = S3KeyOptions(request, 'PUT');
   req.queryParameters['uploadId'] = request.uploadId;
@@ -194,9 +318,34 @@ export async function S3UploadPart(client: AWSClient, request: S3UploadPartReque
   return cancelBody(await client.execute(req));
 }
 
-// <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-//   <Part><ETag>string</ETag><PartNumber>integer</PartNumber></Part>
-// </CompleteMultipartUpload>
+
+/**
+ * Complete a multipart upload
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3CompleteMultipartUploadRequest instance
+ * @returns The Response object containing the statuscode and headers and XML body
+ * 
+ * ```xml	
+ *  <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+ *    <Part>
+ *      <ETag>string</ETag>
+ *      <PartNumber>integer</PartNumber>
+ *    </Part>
+ *    ...
+ *  </CompleteMultipartUpload>
+ * ```
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
+ * 
+ * @example
+ * ```ts
+ * const response = await S3CompleteMultipartUpload(client, { bucket: 'bucket', key: 'key', uploadId: 'uploadId', body: new Uint8Array([1, 2, 3]) });
+ * console.log(response.ok, response.headers);
+ * ```
+ * 
+ * @note Use S3MultipartUploadStream or S3MultipartUpload for a higher level API to do multipart uploads.
+*/
 export async function S3CompleteMultipartUpload(
   client: AWSClient,
   request: S3CompleteMultipartUploadRequest,
@@ -207,6 +356,23 @@ export async function S3CompleteMultipartUpload(
   return cancelBody(await client.execute(req));
 }
 
+/**
+ * Abort a multipart upload
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3AbortMultipartUploadRequest instance
+ * @returns The Response object containing the statuscode and headers
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html
+ * 
+ * @example
+ * ```ts
+ * const response = await S3AbortMultipartUpload(client, { bucket: 'bucket', key: 'key', uploadId: 'uploadId' });
+ * console.log(response.ok, response.headers);
+ * ```
+ * 
+ * @note Use S3MultipartUploadStream or S3MultipartUpload for a higher level API to do multipart uploads.
+ */
 export async function S3AbortMultipartUpload(
   client: AWSClient,
   request: S3AbortMultipartUploadRequest,
@@ -216,7 +382,21 @@ export async function S3AbortMultipartUpload(
   return await client.execute(req);
 }
 
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html
+/**
+ * List buckets
+ * 
+ * @param client - An AWSClient instance
+ * @param request - A S3ListBucketsRequest instance
+ * @returns The S3BucketListResult object
+ * 
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html
+ * 
+ * @example
+ * ```ts
+ * const result = await S3ListBuckets(client);
+ * console.log(result);
+ * ```
+ */
 export async function S3ListBuckets(client: AWSClient, request: S3ListBucketsRequest): Promise<S3BucketListResult> {
   const req: AWSRequest = {
     method: 'GET',
