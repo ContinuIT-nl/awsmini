@@ -22,17 +22,24 @@ export type S3MultipartUploadRequest = Prettify<
  * If any part fails to upload, the multipart upload is aborted.
  *
  * @param {S3MultipartUploadRequest} request - The multipart upload request object.
- * {AWSClient} request.client - The AWS client to use for the upload.
- * {string} request.bucket - The name of the S3 bucket.
- * {string} request.key - The key for the S3 object.
- * {AbortSignal} [request.signal] - An optional AbortSignal to cancel the request.
- * {function} request.nextPart - A function that returns the next part to upload.
- * {Uint8Array} request.nextPart.body - The body of the part to upload.
- * {boolean} request.nextPart.isFinalPart - Whether the part is the final part of the upload.
  * @returns {Promise<void>} A promise that resolves when the upload is complete.
  * @throws {AwsminiS3Error} If any part fails to upload or if the multipart upload is aborted.
+ *
+ * @example
+ * ```ts
+ * await S3MultipartUpload(client, {
+ *   bucket: 'bucket',
+ *   key: 'key',
+ *   nextPart: async (partNumber) => {
+ *     const body = await fetch(`https://example.com/file.txt?part=${partNumber}`);
+ *     return {
+ *       body: new Uint8Array(await body.arrayBuffer()),
+ *       isFinalPart: partNumber === 10
+ *     };
+ *   }
+ * });
+ * ```
  */
-
 export async function S3MultipartUpload(client: AWSClient, request: S3MultipartUploadRequest): Promise<void> {
   const uploadId = await S3CreateMultipartUpload(client, request);
   try {
@@ -101,6 +108,11 @@ export type S3MultipartUploadStreamRequest = Prettify<
  * @param client The AWS client
  * @param request The multipart upload request with a stream instead of a nextPart callback
  * @returns A promise that resolves when the upload is complete
+ *
+ * @example
+ * ```ts
+ * await S3MultipartUploadStream(client, { bucket: 'bucket', key: 'key', stream });
+ * ```
  */
 export function S3MultipartUploadStream(client: AWSClient, request: S3MultipartUploadStreamRequest): Promise<void> {
   const _10MB_ = 10 * 1024 * 1024;
@@ -129,6 +141,7 @@ export function S3MultipartUploadStream(client: AWSClient, request: S3MultipartU
           buffer = newBuffer;
         }
       }
+      // todo: this still needs checking/error handling/see if buffering works correctly
 
       // Determine if this is the final part
       const isFinalPart = isStreamDone;
