@@ -1,5 +1,4 @@
 import type { AWSConfig, AWSFullRequest } from '../misc/awsTypes.ts';
-import { AwsminiS3Error } from '../misc/AwsminiError.ts';
 import { bufferToHex, emptyHashSha256, encodeRfc3986, hashSha256, hmacSha256 } from '../misc/utilities.ts';
 
 const encoder = new TextEncoder();
@@ -55,8 +54,6 @@ export async function signRequest(request: AWSFullRequest, config: AWSConfig) {
   const canonicalRequestHash = await hashSha256(encoder.encode(canonicalRequest));
 
   // AWS4 signature
-  if (!config.secretAccessKey) throw new AwsminiS3Error('Secret access key is not set');
-  if (!config.region) throw new AwsminiS3Error('Region is not set');
   const credentialString = `${date}/${config.region}/${request.service}/aws4_request`;
   const signingKey = await getSigningKey(config.secretAccessKey, date, config.region, request.service);
   const stringToSign = `AWS4-HMAC-SHA256\n${dateTime}\n${credentialString}\n${canonicalRequestHash}`;

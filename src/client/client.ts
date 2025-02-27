@@ -8,9 +8,9 @@ export class AWSClient {
   private config: AWSConfig | undefined;
   private fetch: typeof fetch;
 
-  constructor(config?: ClientConfig) {
-    this.clientConfig = config ?? {};
-    this.fetch = this.clientConfig.fetch ?? fetch; // todo: allow to set a default for all further constructor invocations
+  constructor(clientConfig: ClientConfig) {
+    this.clientConfig = clientConfig;
+    this.fetch = this.clientConfig.fetch ?? fetch;
   }
 
   private getConfig(): AWSConfig {
