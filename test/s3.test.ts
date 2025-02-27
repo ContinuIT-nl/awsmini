@@ -86,6 +86,17 @@ Deno.test('S3PutObject key must be non-empty', async () => {
   assertIsError(error, Error);
 });
 
+Deno.test('S3PutObject - special characters', async () => {
+  const result = await S3PutObject(clientR2, {
+    bucket,
+    key: '2025-02-27T01:15:19.952Z.html',
+    body: new Uint8Array(100),
+  });
+  assert(result.ok, 'S3PutObject failed');
+  const result2 = await S3DeleteObject(clientR2, { bucket, key: '2025-02-27T01:15:19.952Z.html' });
+  assert(result2.ok, 'S3DeleteObject failed');
+});
+
 Deno.test('S3CopyObject abort', async () => {
   const result = await S3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(100) });
   assert(result.ok, 'S3PutObject failed');
@@ -164,6 +175,17 @@ Deno.test('S3GetObject', async () => {
   }
   await Promise.all(promises);
   console.timeEnd(`S3GetObject 10 calls concurrently`);
+});
+
+Deno.test('S3GetObject - special characters', async () => {
+  let error: Error | undefined = undefined;
+  try {
+    await S3GetObject(clientR2, { bucket, key: '2025-02-27T01:15:19.952Z.html' }); //hello/special-characters-_:.@$%^&*()äöüß' });
+  } catch (err) {
+    error = err as Error;
+  }
+  assert(!!error, 'An error should have be thrown');
+  assertIsError(error, Error);
 });
 
 Deno.test('S3ListObjects R2', async () => {
