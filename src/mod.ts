@@ -8,31 +8,18 @@ export { clientConfigFile } from './client/clientConfigFile.ts';
 
 // S3
 
-export {
-  S3AbortMultipartUpload,
-  S3CompleteMultipartUpload,
-  S3CreateMultipartUpload,
-  S3GetObject,
-  S3HeadObject,
-  S3ListBuckets,
-  S3ListObjects,
-  S3PutObject,
-  S3UploadPart,
-} from './s3/s3.ts';
-
-export type {
-  S3AbortMultipartUploadRequest,
-  S3CompleteMultipartUploadRequest,
-  S3CreateMultipartUploadRequest,
-  S3GetObjectRequest,
-  S3HeadObjectRequest,
-  S3ListBucketsRequest,
-  S3ListObjectsRequest,
-  S3PutObjectRequest,
-} from './s3/s3.ts';
-
 export { s3CopyObject, type S3CopyObjectRequest } from './s3/s3CopyObject.ts';
 export { s3DeleteObject, type S3DeleteObjectRequest } from './s3/s3DeleteObject.ts';
+export { s3GetObject, type S3GetObjectRequest } from './s3/s3GetObject.ts';
+export { s3HeadObject, type S3HeadObjectRequest } from './s3/s3HeadObject.ts';
+export { s3ListBuckets, type S3ListBucketsRequest } from './s3/s3ListBuckets.ts';
+export { s3ListObjects, type S3ListObjectsRequest } from './s3/s3ListObjects.ts';
+export { s3PutObject, type S3PutObjectRequest } from './s3/s3PutObject.ts';
+
+export { s3CreateMultipartUpload, type S3CreateMultipartUploadRequest } from './s3/s3CreateMultipartUpload.ts';
+export { s3UploadPart, type S3UploadPartRequest } from './s3/s3UploadPart.ts';
+export { s3CompleteMultipartUpload, type S3CompleteMultipartUploadRequest } from './s3/s3CompleteMultipartUpload.ts';
+export { s3AbortMultipartUpload, type S3AbortMultipartUploadRequest } from './s3/s3AbortMultipartUpload.ts';
 
 export type { ListObjectResult, S3Bucket, S3BucketListResult, S3Object, S3Owner } from './s3/types.ts';
 

@@ -1,11 +1,12 @@
 import type { AWSClient } from '../client/AWSClient.ts';
-import type { Prettify } from '../misc/utilities.ts';
-import { type AWSS3KeyRequest, cancelBody, S3KeyOptions } from './s3.ts';
+import { cancelBody, type Prettify } from '../misc/utilities.ts';
+import { S3KeyOptions, type S3KeyRequest } from './s3.ts';
 
 // todo: if-match, x-amz-if-match-last-modified-time, x-amz-if-match-size
 
 /**
  * The request type for the S3DeleteObject function
+ *
  * @typedef {Object} s3DeleteObjectRequest
  * @property {string} bucket - The bucket to delete the object from
  * @property {string} key - The key of the object to delete
@@ -14,7 +15,7 @@ import { type AWSS3KeyRequest, cancelBody, S3KeyOptions } from './s3.ts';
  *
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
  */
-export type S3DeleteObjectRequest = Prettify<AWSS3KeyRequest>;
+export type S3DeleteObjectRequest = Prettify<S3KeyRequest>;
 
 /**
  * Delete an object from S3

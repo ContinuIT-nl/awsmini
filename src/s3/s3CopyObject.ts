@@ -1,6 +1,6 @@
 import type { AWSClient } from '../client/AWSClient.ts';
-import type { Prettify } from '../misc/utilities.ts';
-import { type AWSS3KeyRequest, cancelBody, S3KeyOptions } from './s3.ts';
+import { cancelBody, type Prettify } from '../misc/utilities.ts';
+import { S3KeyOptions, type S3KeyRequest } from './s3.ts';
 
 /**
  * The request type for the S3CopyObject function
@@ -14,7 +14,7 @@ import { type AWSS3KeyRequest, cancelBody, S3KeyOptions } from './s3.ts';
  *
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
  */
-export type S3CopyObjectRequest = Prettify<AWSS3KeyRequest & { sourceBucket: string; sourceKey: string }>;
+export type S3CopyObjectRequest = Prettify<S3KeyRequest & { sourceBucket: string; sourceKey: string }>;
 
 /**
  * Copy an object from one bucket to another

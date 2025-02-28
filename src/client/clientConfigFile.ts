@@ -14,7 +14,7 @@ import * as process from 'node:process';
  * @param config
  * @returns
  */
-export const clientConfigFile = async (config: ClientConfig, configFile: string): Promise<ClientConfig> => {
+export const clientConfigFile = async (config: ClientConfig, configFile?: string): Promise<ClientConfig> => {
   // If the AWS_SDK_LOAD_CONFIG environment variable is set to any value
   if (!process.env.AWS_SDK_LOAD_CONFIG) return config;
 

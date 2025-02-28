@@ -13,7 +13,7 @@ import * as process from 'node:process';
  * @property {string} sessionToken is set from `AWS_SESSION_TOKEN` if present and not already set
  * @property {string} endpoint is set from `AWS_ENDPOINT_URL` if present and not already set
  */
-export const clientConfigEnv = (config: ClientConfig): ClientConfig => {
+export const clientConfigEnv = (config: ClientConfig = {}): ClientConfig => {
   return {
     region: config.region ?? process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? process.env.AMAZON_REGION,
     accessKeyId: config.accessKeyId ?? process.env.AWS_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY,

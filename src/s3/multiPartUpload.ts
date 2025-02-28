@@ -1,7 +1,9 @@
 import type { AWSClient } from '../client/AWSClient.ts';
 import { type Prettify, xmlEscape } from '../misc/utilities.ts';
-import { S3AbortMultipartUpload, S3CompleteMultipartUpload, S3CreateMultipartUpload, S3UploadPart } from './s3.ts';
-import type { S3CreateMultipartUploadRequest } from './s3.ts';
+import { s3AbortMultipartUpload } from './s3AbortMultipartUpload.ts';
+import { s3CompleteMultipartUpload } from './s3CompleteMultipartUpload.ts';
+import { s3CreateMultipartUpload, type S3CreateMultipartUploadRequest } from './s3CreateMultipartUpload.ts';
+import { s3UploadPart } from './s3UploadPart.ts';
 import { AwsminiS3Error } from '../misc/AwsminiError.ts';
 
 export type S3MultipartUploadPart = {
@@ -41,7 +43,7 @@ export type S3MultipartUploadRequest = Prettify<
  * ```
  */
 export async function S3MultipartUpload(client: AWSClient, request: S3MultipartUploadRequest): Promise<void> {
-  const uploadId = await S3CreateMultipartUpload(client, request);
+  const uploadId = await s3CreateMultipartUpload(client, request);
   try {
     const xml = [
       '<?xml version="1.0" encoding="UTF-8"?>',
@@ -54,7 +56,7 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
       if (!isFinalPart && (body.byteLength < 5 * 1024 * 1024)) {
         throw new AwsminiS3Error('Part is too small');
       }
-      const uploadRequest = await S3UploadPart(client, {
+      const uploadRequest = await s3UploadPart(client, {
         bucket: request.bucket,
         key: request.key,
         uploadId,
@@ -77,7 +79,7 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
     xml.push('</CompleteMultipartUpload>');
     const body = new TextEncoder().encode(xml.join(''));
 
-    await S3CompleteMultipartUpload(client, {
+    await s3CompleteMultipartUpload(client, {
       bucket: request.bucket,
       key: request.key,
       uploadId,
@@ -85,7 +87,7 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
       body,
     });
   } catch (error) {
-    await S3AbortMultipartUpload(client, {
+    await s3AbortMultipartUpload(client, {
       bucket: request.bucket,
       key: request.key,
       uploadId,
