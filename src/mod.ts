@@ -4,7 +4,6 @@ export { AWSClient } from './client/AWSClient.ts';
 export type { AWSFullRequest, AWSRequest } from './misc/awsTypes.ts';
 export type { ClientConfig } from './client/clientConfig.ts';
 export { clientConfigEnv } from './client/clientConfigEnv.ts';
-export { clientConfigFile } from './client/clientConfigFile.ts';
 
 // S3
 
