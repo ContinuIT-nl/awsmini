@@ -1,7 +1,7 @@
 import { signRequest } from './awsSignature.ts';
 import type { AWSConfig, AWSFullRequest, AWSRequest } from '../misc/awsTypes.ts';
 import type { ClientConfig } from './clientConfig.ts';
-import { AwsminiError, AwsminiRequestError } from '../misc/AwsminiError.ts';
+import { AwsminiError } from '../misc/AwsminiError.ts';
 import { encodeRfc3986 } from '../misc/utilities.ts';
 
 /**
@@ -42,11 +42,11 @@ export class AWSClient {
   constructor(clientConfig: ClientConfig) {
     // todo: Also SSO, IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
     const region = clientConfig.region;
-    if (region === undefined) throw new AwsminiError('Region is not set');
+    if (region === undefined) throw new AwsminiError('Region is not set', 'clientConfig');
     const accessKeyId = clientConfig.accessKeyId;
-    if (accessKeyId === undefined) throw new AwsminiError('Access key ID is not set');
+    if (accessKeyId === undefined) throw new AwsminiError('Access key ID is not set', 'clientConfig');
     const secretAccessKey = clientConfig.secretAccessKey;
-    if (secretAccessKey === undefined) throw new AwsminiError('Secret access key is not set');
+    if (secretAccessKey === undefined) throw new AwsminiError('Secret access key is not set', 'clientConfig');
     const endpoint = clientConfig.endpoint;
     const url = endpoint ? new URL(endpoint) : undefined;
 
@@ -101,10 +101,14 @@ export class AWSClient {
     if (request.checkResponse && !response.ok) {
       const errorsText = await response.text();
       const errors = errorsText.match(/<Error><Code>(.*?)<\/Code><Message>(.*?)<\/Message><\/Error>/);
-      throw new AwsminiRequestError(
+      throw new AwsminiError(
         `HTTP ${response.status} ${response.statusText}: [${errors?.[1] ?? 'unknown error'}] ${
           errors?.[2] ?? errorsText
         }`,
+        'aws',
+        {
+          statusCode: response.status,
+        },
       );
     }
     // todo: handle retries, timeouts, etc.

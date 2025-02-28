@@ -1,5 +1,5 @@
 import type { AWSClient } from '../client/AWSClient.ts';
-import { AwsminiS3Error } from '../misc/AwsminiError.ts';
+import { AwsminiError } from '../misc/AwsminiError.ts';
 import type { Prettify } from '../misc/utilities.ts';
 import { S3KeyOptions, type S3KeyRequest } from './s3.ts';
 
@@ -43,6 +43,6 @@ export async function s3CreateMultipartUpload(
   const text = await response.text();
   // <InitiateMultipartUploadResult><Bucket>string</Bucket><Key>string</Key><UploadId>string</UploadId></InitiateMultipartUploadResult>
   const uploadId = text.match(/<UploadId>(.*?)<\/UploadId>/)?.[1];
-  if (!uploadId) throw new AwsminiS3Error('UploadId not found');
+  if (!uploadId) throw new AwsminiError('UploadId not found', 's3');
   return uploadId;
 }

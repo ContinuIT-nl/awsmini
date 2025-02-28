@@ -4,7 +4,7 @@ import { s3AbortMultipartUpload } from './s3AbortMultipartUpload.ts';
 import { s3CompleteMultipartUpload } from './s3CompleteMultipartUpload.ts';
 import { s3CreateMultipartUpload, type S3CreateMultipartUploadRequest } from './s3CreateMultipartUpload.ts';
 import { s3UploadPart } from './s3UploadPart.ts';
-import { AwsminiS3Error } from '../misc/AwsminiError.ts';
+import { AwsminiError } from '../misc/AwsminiError.ts';
 
 export type S3MultipartUploadPart = {
   body: Uint8Array;
@@ -54,7 +54,7 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
       const { body, isFinalPart } = await request.nextPart(partNumber);
       // Parts (except the last one) should be at least 5MB in size (EntityTooSmall)
       if (!isFinalPart && (body.byteLength < 5 * 1024 * 1024)) {
-        throw new AwsminiS3Error('Part is too small');
+        throw new AwsminiError('Part is too small', 's3');
       }
       const uploadRequest = await s3UploadPart(client, {
         bucket: request.bucket,
@@ -67,12 +67,12 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
       });
       const etag = uploadRequest.headers.get('etag');
       if (!etag) {
-        throw new AwsminiS3Error('No etag returned from S3UploadPart');
+        throw new AwsminiError('No etag returned from S3UploadPart', 's3');
       }
       xml.push(`<Part><ETag>${xmlEscape(etag)}</ETag><PartNumber>${partNumber}</PartNumber></Part>`);
       if (isFinalPart) break;
       if (partNumber >= 10000) {
-        throw new AwsminiS3Error('Too many parts (max 10000)');
+        throw new AwsminiError('Too many parts (max 10000)', 's3');
       }
       partNumber++;
     }
@@ -92,8 +92,8 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
       key: request.key,
       uploadId,
     });
-    if (error instanceof AwsminiS3Error) throw error;
-    throw new AwsminiS3Error('Multipart upload failed', {
+    if (error instanceof AwsminiError) throw error;
+    throw new AwsminiError('Multipart upload failed', 's3', {
       cause: error instanceof Error ? error : new Error(String(error)), // todo: makeError in  utilities.ts
     });
   }

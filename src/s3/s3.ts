@@ -1,5 +1,5 @@
 import type { AWSBaseRequest, AWSRequest, HTTPMethod } from '../misc/awsTypes.ts';
-import { AwsminiS3Error } from '../misc/AwsminiError.ts';
+import { AwsminiError } from '../misc/AwsminiError.ts';
 
 // types
 export type S3BucketRequest = AWSBaseRequest & { bucket: string };
@@ -8,7 +8,7 @@ export type S3KeyRequest = S3BucketRequest & { key: string };
 
 // Request building
 export const S3KeyOptions = (request: S3KeyRequest, method: HTTPMethod): AWSRequest => {
-  if (!request.key) throw new AwsminiS3Error('Key is required and should be at least one character long');
+  if (!request.key) throw new AwsminiError('Key is required and should be at least one character long', 's3');
   return {
     method,
     subhost: request.bucket,
@@ -44,16 +44,16 @@ export type AWSIfOptions = {
 export const awsAddIfOptions = (req: AWSRequest, options: AWSIfOptions) => {
   // Validate options
   if (options.ifMatch && !options.ifNoneMatch) {
-    throw new AwsminiS3Error('ifMatch and ifNoneMatch cannot be used together');
+    throw new AwsminiError('ifMatch and ifNoneMatch cannot be used together', 's3');
   }
   if (options.ifNoneMatch && !options.ifMatch) {
-    throw new AwsminiS3Error('ifNoneMatch and ifMatch cannot be used together');
+    throw new AwsminiError('ifNoneMatch and ifMatch cannot be used together', 's3');
   }
   if (options.ifModifiedSince && !options.ifUnmodifiedSince) {
-    throw new AwsminiS3Error('ifModifiedSince and ifUnmodifiedSince cannot be used together');
+    throw new AwsminiError('ifModifiedSince and ifUnmodifiedSince cannot be used together', 's3');
   }
   if (options.ifUnmodifiedSince && !options.ifModifiedSince) {
-    throw new AwsminiS3Error('ifUnmodifiedSince and ifModifiedSince cannot be used together');
+    throw new AwsminiError('ifUnmodifiedSince and ifModifiedSince cannot be used together', 's3');
   }
 
   // Add options
