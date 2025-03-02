@@ -48,3 +48,20 @@ export const cancelBody = (response: Response) => {
   response.body?.cancel();
   return response;
 };
+
+type TryResult<T> = [null, T] | [Error, null];
+
+export const ensureError = (error: unknown): Error => error instanceof Error ? error : new Error(String(error));
+
+export const tryCatchAsync = <T>(promise: Promise<T>): Promise<TryResult<T>> =>
+  promise
+    .then((data): TryResult<T> => [null, data])
+    .catch((error): TryResult<T> => [ensureError(error), null]);
+
+export const tryCatch = <T>(fn: () => T): TryResult<T> => {
+  try {
+    return [null, fn()];
+  } catch (error) {
+    return [ensureError(error), null];
+  }
+};
