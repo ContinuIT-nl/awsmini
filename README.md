@@ -30,6 +30,15 @@ If the class is instantiated in a non  browser environment you can get the infor
 const client = new AWSClient(clientConfigEnv());
 ```
 
+The configuration should be present in the environment variables (example for connecting to R2):
+
+```ini
+AWS_ENDPOINT_URL=https://some-user-id.r2.cloudflarestorage.com
+AWS_ACCESS_KEY=my-access-key
+AWS_SECRET_KEY=my-secret-key
+AWS_REGION=auto
+```
+
 ### From `~/.aws`
 
 To be implemeneted
