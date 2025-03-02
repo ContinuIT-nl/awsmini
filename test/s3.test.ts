@@ -62,7 +62,7 @@ Deno.test('s3PutObject - with sha256', async () => {
     bucket: bucket2,
     key: 'hello/empty',
     body: new Uint8Array(0),
-    contentSha256: true,
+    contentSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
   });
   assert(result.ok, 'S3PutObject failed');
   const result2 = await s3PutObject(clientAWS, {
