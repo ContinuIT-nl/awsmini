@@ -27,6 +27,20 @@ Deno.test('awsClient missing accessKeyId', () => {
   assert(error.message.includes('accessKeyId'));
 });
 
+Deno.test('awsClient invalid url', () => {
+  const [error, _client] = tryCatch(() =>
+    new AWSClient({
+      accessKeyId: 'test-access-key',
+      secretAccessKey: 'test-secret-key',
+      region: 'us-east-1',
+      endpoint: 'invalid-url',
+    })
+  );
+  assert(!!error, 'An error should have been thrown');
+  assertIsError(error, Error);
+  assert(error.message.includes('endpoint'));
+});
+
 Deno.test('awsClient missing secretAccessKey', () => {
   const [error, _client] = tryCatch(() =>
     new AWSClient({
