@@ -4,46 +4,81 @@ Access AWS (compatible) services fast in with simple tree shakeable code
 
 This module is a work in progress.
 
+
+## Setup AWS client
+
+The class AWSClient is used to perform the request you want to do.
+Weh setting up an instance you can specify the credentials and a few other parameters.
+
+If you want to set the parameters manually you can do:
+
+```typescript
+
+const client = new AWSClient({
+  region: 'us-east-1',
+  accessKeyId: 'my-access-key',
+  secretAccessKey: 'my-secret-access-key',
+  ...
+});
+```
+
+If the class is instantiated in a non  browser environment you can get the information from  a different number of sources:
+
+### from environment variables
+
+```typescript
+const client = new AWSClient(clientConfigEnv());
+```
+
+### From `~/.aws`
+
+To be implemeneted
+
+### From SSO
+
+To be implemeneted
+
+### From IMDSv2
+
+To be implemeneted
+
+### combining several sources
+
+better explanation here
+
+```typescript
+const client = new AWSClient(clientConfigEnv(clientConfigFromSSO()));
+```
+
 ## S3 Examples
 
 ### S3CopyObject
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3CopyObject } from './src/s3/s3.ts';
+import { s3CopyObject } from './src/s3/s3CopyObject.ts';
 
-// Create AWS client
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // Copy an object from one location to another
-const response = await S3CopyObject(client, {
+const response = await s3CopyObject(client, {
   bucket: 'destination-bucket',
   key: 'destination-key.txt',
   sourceBucket: 'source-bucket',
   sourceKey: 'source-key.txt',
 });
 
-console.log('Copy successful:', response.status === 200);
+console.log('Copy successful:', response.ok);
 ```
 
 ### S3GetObject
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3GetObject } from './src/s3/s3.ts';
+import { s3GetObject } from './src/s3/s3GetObject.ts';
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // Get an object from S3
-const data = await S3GetObject(client, {
+const data = await s3GetObject(client, {
   bucket: 'my-bucket',
   key: 'my-file.txt',
 });
@@ -56,17 +91,12 @@ console.log('File content:', textContent);
 ### S3HeadObject
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3HeadObject } from './src/s3/s3.ts';
+import { s3HeadObject } from './src/s3/s3HeadObject.ts';
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // Get object metadata without downloading the object
-const response = await S3HeadObject(client, {
+const response = await s3HeadObject(client, {
   bucket: 'my-bucket',
   key: 'my-file.txt',
 });
@@ -79,20 +109,15 @@ console.log('Content length:', response.headers.get('content-length'));
 ### S3PutObject
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3PutObject } from './src/s3/s3.ts';
+import { s3PutObject } from './src/s3/s3PutObject.ts';
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // Upload a text file to S3
 const content = 'Hello, World!';
 const data = new TextEncoder().encode(content);
 
-const response = await S3PutObject(client, {
+const response = await s3PutObject(client, {
   bucket: 'my-bucket',
   key: 'hello.txt',
   body: data,
@@ -104,38 +129,31 @@ console.log('Upload successful:', response.status === 200);
 ### S3DeleteObject
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3DeleteObject } from './src/s3/s3.ts';
+import { s3DeleteObject } from './src/s3/s3DeleteObject.ts';
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // Delete an object from S3
-const response = await S3DeleteObject(client, {
+const response = await s3DeleteObject(client, {
   bucket: 'my-bucket',
   key: 'file-to-delete.txt',
 });
 
-console.log('Delete successful:', response.status === 204);
+console.log('Delete successful:', response.ok);
 ```
 
 ### S3ListObjects
 
-```typescript
-import { AWSClient } from './src/client.ts';
-import { S3ListObjects } from './src/s3/s3.ts';
+Warn about the 1000 file limit (eg pagination), reference the wrapper
+Explain that when using a delimiter you get common prefixes, no delimiter you get files
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+```typescript
+import { s3ListObjects } from './src/s3/s3ListObjects.ts';
+
+const client = obtainClient(); // See Setup AWS client
 
 // List objects in a bucket with a prefix
-const result = await S3ListObjects(client, {
+const result = await s3ListObjects(client, {
   bucket: 'my-bucket',
   prefix: 'folder/',
   delimiter: '/',
@@ -147,18 +165,15 @@ console.log('Files:', result.contents.map((item) => item.key));
 
 ### S3CreateMultipartUpload
 
-```typescript
-import { AWSClient } from './src/client.ts';
-import { S3CreateMultipartUpload } from './src/s3/s3.ts';
+Mention the wrapper
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+```typescript
+import { s3CreateMultipartUpload } from './src/s3/s3CreateMultipartUpload.ts';
+
+const client = obtainClient(); // See Setup AWS client
 
 // Initiate a multipart upload
-const uploadId = await S3CreateMultipartUpload(client, {
+const uploadId = await s3CreateMultipartUpload(client, {
   bucket: 'my-bucket',
   key: 'large-file.zip',
 });
@@ -168,19 +183,17 @@ console.log('Multipart upload initiated with ID:', uploadId);
 
 ### S3UploadPart
 
-```typescript
-import { AWSClient } from './src/client.ts';
-import { S3UploadPart } from './src/s3/s3.ts';
+Mention the 5MB limit and (upper limit?)
+Mention the 10000 parts limit
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+```typescript
+import { s3UploadPart } from './src/s3/s3UploadPart.ts';
+
+const client = obtainClient(); // See Setup AWS client
 
 // Upload a part of a multipart upload
 const partData = new Uint8Array(6 * 1024 * 1024); // 6MB of data
-const response = await S3UploadPart(client, {
+const response = await s3UploadPart(client, {
   bucket: 'my-bucket',
   key: 'large-file.zip',
   uploadId: 'YOUR_UPLOAD_ID',
@@ -195,14 +208,9 @@ console.log('Part uploaded with ETag:', etag);
 ### S3CompleteMultipartUpload
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3CompleteMultipartUpload } from './src/s3/s3.ts';
+import { s3CompleteMultipartUpload } from './src/s3/s3CompleteMultipartUpload.ts';
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // Complete a multipart upload with the ETags of all parts
 const completeXml = [
@@ -215,7 +223,7 @@ const completeXml = [
 
 const body = new TextEncoder().encode(completeXml);
 
-const response = await S3CompleteMultipartUpload(client, {
+const response = await s3CompleteMultipartUpload(client, {
   bucket: 'my-bucket',
   key: 'large-file.zip',
   uploadId: 'YOUR_UPLOAD_ID',
@@ -225,20 +233,15 @@ const response = await S3CompleteMultipartUpload(client, {
 console.log('Multipart upload completed successfully:', response.status === 200);
 ```
 
-### S3AbortMultipartUpload
+### s3AbortMultipartUpload
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3AbortMultipartUpload } from './src/s3/s3.ts';
+import { s3AbortMultipartUpload } from './src/s3/s3AbortMultipartUpload.ts';
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // Abort a multipart upload
-const response = await S3AbortMultipartUpload(client, {
+const response = await s3AbortMultipartUpload(client, {
   bucket: 'my-bucket',
   key: 'large-file.zip',
   uploadId: 'YOUR_UPLOAD_ID',
@@ -250,17 +253,12 @@ console.log('Multipart upload aborted successfully:', response.status === 204);
 ### S3ListBuckets
 
 ```typescript
-import { AWSClient } from './src/client.ts';
-import { S3ListBuckets } from './src/s3/s3.ts';
+import { s3ListBuckets } from './src/s3/s3ListBuckets.ts';
 
-const client = new AWSClient({
-  accessKeyId: 'YOUR_ACCESS_KEY',
-  secretAccessKey: 'YOUR_SECRET_KEY',
-  region: 'us-east-1',
-});
+const client = obtainClient(); // See Setup AWS client
 
 // List all buckets
-const result = await S3ListBuckets(client, {});
+const result = await s3ListBuckets(client, {});
 
 console.log('Buckets:', result.buckets.map((bucket) => bucket.name));
 ```
