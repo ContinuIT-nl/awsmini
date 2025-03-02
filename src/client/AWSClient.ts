@@ -2,7 +2,7 @@ import { signRequest } from './awsSignature.ts';
 import type { AWSConfig, AWSFullRequest, AWSRequest } from '../misc/awsTypes.ts';
 import type { ClientConfig } from './clientConfig.ts';
 import { AwsminiError } from '../misc/AwsminiError.ts';
-import { encodeRfc3986 } from '../misc/utilities.ts';
+import { encodeRfc3986, tryCatch } from '../misc/utilities.ts';
 
 /**
  * AWS Client
@@ -41,26 +41,25 @@ export class AWSClient {
    */
   constructor(clientConfig: ClientConfig) {
     // todo: Also SSO, IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
-    const region = clientConfig.region;
-    if (region === undefined) throw new AwsminiError('Region is not set', 'clientConfig');
-    const accessKeyId = clientConfig.accessKeyId;
-    if (accessKeyId === undefined) throw new AwsminiError('Access key ID is not set', 'clientConfig');
-    const secretAccessKey = clientConfig.secretAccessKey;
-    if (secretAccessKey === undefined) throw new AwsminiError('Secret access key is not set', 'clientConfig');
-    const endpoint = clientConfig.endpoint;
-    const url = endpoint ? new URL(endpoint) : undefined;
+    // Sanity checks. Collect errors in an array and throw all findings in one Error.
+    const errors: string[] = [];
+    if (!clientConfig.region) errors.push('region is not set');
+    if (!clientConfig.accessKeyId) errors.push('accessKeyId is not set');
+    if (!clientConfig.secretAccessKey) errors.push('secretAccessKey is not set');
+    const [err, url] = tryCatch(() => clientConfig.endpoint ? new URL(clientConfig.endpoint) : undefined);
+    if (err) errors.push(err.message);
+    if (errors.length > 0) throw new AwsminiError(errors.join(', '), 'clientConfig');
 
     const result = {
-      region,
-      accessKeyId,
-      secretAccessKey,
+      region: clientConfig.region!,
+      accessKeyId: clientConfig.accessKeyId!,
+      secretAccessKey: clientConfig.secretAccessKey!,
       sessionToken: clientConfig.sessionToken,
       protocol: url ? url.protocol.replace(':', '') : 'https',
       host: url ? url.host : '',
       // todo: maxRetries etc
     };
     this.config = result;
-
     this.fetch = clientConfig.fetch ?? fetch;
   }
 
