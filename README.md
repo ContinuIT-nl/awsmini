@@ -4,7 +4,6 @@ Access AWS (compatible) services fast in with simple tree shakeable code
 
 This module is a work in progress.
 
-
 ## Setup AWS client
 
 The class AWSClient is used to perform the request you want to do.
@@ -13,7 +12,6 @@ Weh setting up an instance you can specify the credentials and a few other param
 If you want to set the parameters manually you can do:
 
 ```typescript
-
 const client = new AWSClient({
   region: 'us-east-1',
   accessKeyId: 'my-access-key',
@@ -22,7 +20,7 @@ const client = new AWSClient({
 });
 ```
 
-If the class is instantiated in a non  browser environment you can get the information from  a different number of sources:
+If the class is instantiated in a non browser environment you can get the information from a different number of sources:
 
 ### from environment variables
 
