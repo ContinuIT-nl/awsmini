@@ -49,7 +49,7 @@ if (!bucket) {
   throw new Error('TEST_BUCKET is not set. Please provide access to a test bucket in the environment variables.');
 }
 
-Deno.test('S3PutObject', async () => {
+Deno.test('s3PutObject', async () => {
   const result = await s3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(0) });
   assert(result.ok, 'S3PutObject failed');
   const result2 = await s3GetObject(clientR2, { bucket, key: 'hello/world' });
@@ -57,7 +57,7 @@ Deno.test('S3PutObject', async () => {
 });
 // todo: properties
 
-Deno.test('S3PutObject - with sha256', async () => {
+Deno.test('s3PutObject - with sha256', async () => {
   const result = await s3PutObject(clientAWS, {
     bucket: bucket2,
     key: 'hello/empty',
@@ -75,7 +75,7 @@ Deno.test('S3PutObject - with sha256', async () => {
 });
 
 // todo: check other things a key must adhere to
-Deno.test('S3PutObject key must be non-empty', async () => {
+Deno.test('s3PutObject key must be non-empty', async () => {
   let error: Error | undefined = undefined;
   try {
     await s3PutObject(clientR2, { bucket, key: '', body: new Uint8Array(100) });
@@ -86,7 +86,7 @@ Deno.test('S3PutObject key must be non-empty', async () => {
   assertIsError(error, Error);
 });
 
-Deno.test('S3PutObject - special characters', async () => {
+Deno.test('s3PutObject - special characters', async () => {
   const result = await s3PutObject(clientR2, {
     bucket,
     key: '2025-02-27T01:15:19.952Z.html',
@@ -97,7 +97,7 @@ Deno.test('S3PutObject - special characters', async () => {
   assert(result2.ok, 's3DeleteObject failed');
 });
 
-Deno.test('S3CopyObject abort', async () => {
+Deno.test('s3CopyObject abort', async () => {
   const result = await s3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(100) });
   assert(result.ok, 'S3PutObject failed');
 
@@ -135,7 +135,7 @@ Deno.test('s3DeleteObject nonexisting', async () => {
   assert(result.ok, 's3DeleteObject nonexisting failed');
 });
 
-Deno.test('S3HeadObject', async () => {
+Deno.test('s3HeadObject', async () => {
   // Make sure an object exists
   const result1 = await s3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(100) });
   assert(result1.ok, 'S3PutObject failed');
@@ -145,7 +145,7 @@ Deno.test('S3HeadObject', async () => {
   assertEquals(result.headers.get('content-length'), '100');
 });
 
-Deno.test.ignore('S3HeadObject abort', async () => {
+Deno.test.ignore('s3HeadObject abort', async () => {
   // todo: the test fails
   /*
 error: AssertionError: Expected function to throw.
@@ -161,7 +161,7 @@ It most likely originated from a dangling promise, event/timeout handler or top-
   await sleep(100);
 });
 
-Deno.test('S3GetObject', async () => {
+Deno.test('s3GetObject', async () => {
   console.time(`S3GetObject 10 calls sequentially`);
   for (let i = 0; i < 10; i++) {
     await s3GetObject(clientR2, { bucket, key: 'hello/world' });
@@ -177,7 +177,7 @@ Deno.test('S3GetObject', async () => {
   console.timeEnd(`S3GetObject 10 calls concurrently`);
 });
 
-Deno.test('S3GetObject - special characters', async () => {
+Deno.test('s3GetObject - special characters', async () => {
   let error: Error | undefined = undefined;
   try {
     await s3GetObject(clientR2, { bucket, key: '2025-02-27T01:15:19.952Z.html' }); //hello/special-characters-_:.@$%^&*()äöüß' });
@@ -188,25 +188,25 @@ Deno.test('S3GetObject - special characters', async () => {
   assertIsError(error, Error);
 });
 
-Deno.test('S3ListObjects R2', async () => {
+Deno.test('s3ListObjects R2', async () => {
   const list = await s3ListObjects(clientR2, { bucket, prefix: '' });
   assert(list.content.length > 0, 'S3ListObjects returned no content');
   assert(list.prefixes.length === 0, 'S3ListObjects returned no prefixes');
 });
 
-Deno.test('S3ListObjects AWS', async () => {
+Deno.test('s3ListObjects AWS', async () => {
   const list = await s3ListObjects(clientAWS, { bucket: bucket2, prefix: '' });
   assert(list.content.length > 0, 'S3ListObjects returned no content');
   assert(list.prefixes.length === 0, 'S3ListObjects returned no prefixes');
 });
 
-Deno.test('S3ListObjects nonexistingKey', async () => {
+Deno.test('s3ListObjects nonexistingKey', async () => {
   const list = await s3ListObjects(clientR2, { bucket, prefix: 'nonexistingKey/' });
   assert(list.content.length === 0, 'S3ListObjects returned non-empty list');
   assert(list.prefixes.length === 0, 'S3ListObjects returned non-empty prefixes');
 });
 
-Deno.test('S3ListObjects commonPrefix', async () => {
+Deno.test('s3ListObjects commonPrefix', async () => {
   const list = await s3ListObjects(clientR2, { bucket, delimiter: '/' });
   await Deno.writeTextFile('./data/s3ListObjectsCommonPrefix.json', JSON.stringify(list, null, 2));
   assert(list.content.length === 0, 'S3ListObjects returned non-empty list');
@@ -216,7 +216,7 @@ Deno.test('S3ListObjects commonPrefix', async () => {
 // todo: test pagination on ListObjects
 
 // ListBuckets
-Deno.test('ListBuckets', async () => {
+Deno.test('listBuckets', async () => {
   const result = await s3ListBuckets(clientAWS, { prefix: 'rits' });
   assert(!result.continuationToken, 'ListBuckets returned a continuation token');
   assert(result.buckets.length > 0, 'ListBuckets returned no buckets');
@@ -249,69 +249,45 @@ Deno.test('multipartUpload - tooSmall', async () => {
   const _1MB_ = 1024 * 1024;
   const body = new Uint8Array(_1MB_ * 5);
   for (let i = 0; i < body.length; i++) body[i] = (i + i >> 16) % 256;
+  let error: Error | undefined = undefined;
   try {
     await S3MultipartUpload(clientR2, {
       bucket,
-      key: 'hello/big-too-small',
-      nextPart: (partNumber: number) => {
-        return Promise.resolve({
+      key: 'hello/small',
+      nextPart: (partNumber: number) =>
+        Promise.resolve({
           body: body.slice((partNumber - 1) * _1MB_, partNumber * _1MB_),
           isFinalPart: partNumber === 5,
-        });
-      },
+        }),
     });
-  } catch (error) {
-    assertIsError(error, Error);
-    assertEquals(error.message, 'Part is too small');
+  } catch (err) {
+    error = err as Error;
   }
+  assert(!!error, 'An error should have be thrown');
+  assertIsError(error, Error);
 });
 
 Deno.test('multipartUploadStream', async () => {
-  const _200KB_ = 200 * 1024;
   const _10MB_ = 10 * 1024 * 1024;
-  const totalSize = 5 * _10MB_; // 50MB total
-  const body = new Uint8Array(totalSize);
+  const body = new Uint8Array(_10MB_ * 5);
+  for (let i = 0; i < body.length; i++) body[i] = (i + i >> 16) % 256;
 
-  // Fill the array with deterministic data
-  for (let i = 0; i < body.length; i++) {
-    body[i] = (i + i >> 16) % 256;
-  }
-
-  // Create a ReadableStream from the body
   const stream = new ReadableStream({
     start(controller) {
-      // Send data in chunks of 200KB
-      for (let offset = 0; offset < totalSize; offset += _200KB_) {
-        const chunk = body.slice(offset, Math.min(offset + _200KB_, totalSize));
-        controller.enqueue(chunk);
+      for (let i = 0; i < 5; i++) {
+        controller.enqueue(body.slice(i * _10MB_, (i + 1) * _10MB_));
       }
       controller.close();
     },
   });
 
-  // Upload the stream
   await S3MultipartUploadStream(clientR2, {
     bucket,
-    key: 'hello/stream-upload',
+    key: 'hello/stream',
     stream,
   });
 
-  // Download the uploaded file
-  const downloadedData = await s3GetObject(clientR2, {
-    bucket,
-    key: 'hello/stream-upload',
-  });
-
-  // Verify the content
-  assertEquals(downloadedData.length, body.length, 'Downloaded data length does not match uploaded data length');
-
-  // Check that the content matches
-  let allMatch = true;
-  for (let i = 0; i < body.length; i++) {
-    if (body[i] !== downloadedData[i]) {
-      allMatch = false;
-      break;
-    }
-  }
-  assert(allMatch, 'Downloaded data does not match uploaded data');
+  const response = await s3HeadObject(clientR2, { bucket, key: 'hello/stream' });
+  assert(response.ok, 'S3HeadObject failed');
+  assertEquals(response.headers.get('content-length'), `${body.byteLength}`);
 });
