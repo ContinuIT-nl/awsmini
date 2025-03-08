@@ -1,4 +1,5 @@
 import type { AWSClient } from '../client/AWSClient.ts';
+import { AwsminiError } from '../misc/AwsminiError.ts';
 import type { Prettify } from '../misc/utilities.ts';
 import { awsAddIfOptions, type AWSIfOptions, S3KeyOptions, type S3KeyRequest } from './s3.ts';
 
@@ -19,6 +20,12 @@ import { awsAddIfOptions, type AWSIfOptions, S3KeyOptions, type S3KeyRequest } f
  */
 export type S3GetObjectRequest = Prettify<S3KeyRequest & AWSIfOptions>;
 
+export async function s3GetObjectRaw(client: AWSClient, request: S3GetObjectRequest): Promise<Response> {
+  const req = S3KeyOptions(request, 'GET');
+  awsAddIfOptions(req, request);
+  return await client.execute(req);
+}
+
 /**
  * Get an object from S3
  *
@@ -35,8 +42,31 @@ export type S3GetObjectRequest = Prettify<S3KeyRequest & AWSIfOptions>;
  * ```
  */
 export async function s3GetObject(client: AWSClient, request: S3GetObjectRequest): Promise<Uint8Array> {
-  const req = S3KeyOptions(request, 'GET');
-  awsAddIfOptions(req, request);
-  return (await client.execute(req)).bytes();
-  // todo: handle streaming, range requests, etc.
+  return (await s3GetObjectRaw(client, request)).bytes();
+}
+
+/**
+ * Get an object from S3 as a stream
+ *
+ * @param client - An AWSClient instance
+ * @param request - A S3GetObjectRequest instance
+ * @returns The stream of the object
+ */
+export async function s3GetObjectStream(client: AWSClient, request: S3GetObjectRequest): Promise<ReadableStream> {
+  const response = await s3GetObjectRaw(client, request);
+  if (response.status !== 200 || !response.body) {
+    throw new AwsminiError('Failed to get object', 's3', { statusCode: response.status });
+  }
+  return response.body;
+}
+
+/**
+ * Get an object from S3 as a string
+ *
+ * @param client - An AWSClient instance
+ * @param request - A S3GetObjectRequest instance
+ * @returns The object as a string
+ */
+export async function s3GetObjectText(client: AWSClient, request: S3GetObjectRequest): Promise<string> {
+  return (await s3GetObjectRaw(client, request)).text();
 }

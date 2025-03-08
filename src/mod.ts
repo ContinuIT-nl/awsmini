@@ -9,7 +9,7 @@ export { clientConfigEnv } from './client/clientConfigEnv.ts';
 
 export { s3CopyObject, type S3CopyObjectRequest } from './s3/s3CopyObject.ts';
 export { s3DeleteObject, type S3DeleteObjectRequest } from './s3/s3DeleteObject.ts';
-export { s3GetObject, type S3GetObjectRequest } from './s3/s3GetObject.ts';
+export { s3GetObject, type S3GetObjectRequest, s3GetObjectStream, s3GetObjectText } from './s3/s3GetObject.ts';
 export { s3HeadObject, type S3HeadObjectRequest } from './s3/s3HeadObject.ts';
 export { s3ListBuckets, type S3ListBucketsRequest } from './s3/s3ListBuckets.ts';
 export { s3ListObjects, type S3ListObjectsRequest } from './s3/s3ListObjects.ts';

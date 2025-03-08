@@ -4,6 +4,8 @@ import {
   s3CopyObject,
   s3DeleteObject,
   s3GetObject,
+  s3GetObjectStream,
+  s3GetObjectText,
   s3HeadObject,
   s3ListBuckets,
   s3ListObjects,
@@ -50,10 +52,10 @@ if (!bucket) {
 }
 
 Deno.test('s3PutObject', async () => {
-  const result = await s3PutObject(clientR2, { bucket, key: 'hello/world', body: new Uint8Array(0) });
+  const result = await s3PutObject(clientR2, { bucket, key: 'hello/world', body: 'Hello World' });
   assert(result.ok, 'S3PutObject failed');
-  const result2 = await s3GetObject(clientR2, { bucket, key: 'hello/world' });
-  assertEquals(result2.byteLength, 0);
+  const result2 = await s3GetObjectText(clientR2, { bucket, key: 'hello/world' });
+  assertEquals(result2, 'Hello World');
 });
 // todo: properties
 
@@ -188,6 +190,31 @@ Deno.test('s3GetObject - special characters', async () => {
   assertIsError(error, Error);
 });
 
+Deno.test('s3GetObjectStream', async () => {
+  const result = await s3PutObject(clientR2, { bucket, key: 'hello/world', body: 'Hello World' });
+  assert(result.ok, 'S3PutObject failed');
+  const stream = await s3GetObjectStream(clientR2, { bucket, key: 'hello/world' });
+  const reader = stream.getReader();
+  
+  try {
+    const streamResult = await reader.read();
+    const text = new TextDecoder().decode(streamResult.value);
+    assertEquals(text, 'Hello World');
+    assertEquals((await reader.read()).done, true);
+  } finally {
+    // Make sure we release the reader
+    reader.releaseLock();
+    // Cancel the stream if it's still active
+    if (stream.locked === false) {
+      await stream.cancel();
+    }
+  }
+});
+
+Deno.test('s3GetObjectText', async () => {
+  const text = await s3GetObjectText(clientR2, { bucket, key: 'hello/world' });
+  assertEquals(text, 'Hello World');
+});
 Deno.test('s3ListObjects R2', async () => {
   const list = await s3ListObjects(clientR2, { bucket, prefix: '' });
   assert(list.content.length > 0, 'S3ListObjects returned no content');
