@@ -8,7 +8,7 @@ import type { Prettify } from '../misc/utilities.ts';
  *
  * @typedef {Object} LambdaInvokeRequest
  * @property {string} functionName - The name of the function to invoke
- * @property {Uint8Array} payload - The payload to invoke the function with
+ * @property {unknown} payload - The payload to invoke the function with (It must be JSON serializable)
  * @property {string} [invocationType] - The invocation type to use: 'RequestResponse' or 'Event' or 'DryRun'
  * @property {string} [logType] - The log type to use
  * @property {string} [clientContext] - The client context to use
@@ -29,6 +29,18 @@ export type LambdaInvokeRequest = Prettify<
   }
 >;
 
+/**
+ * LambdaInvokeResponse
+ *
+ * @typedef {Object} LambdaInvokeResponse
+ * 
+ * @property {unknown} response - The response from the function (JSON decoded)
+ * @property {number} statusCode - The status code of the response
+ * @property {string|null} logResult - The log tail from the function if logType = 'Tail' was in the request
+ * @property {string|null} functionError - The function error of the function if it failed
+ * @property {string|null} executedVersion - The executed version of the function
+ * @property {string|null} requestId - The request ID from the function invocation
+ */
 export type LambdaInvokeResponse = {
   response: unknown;
   statusCode: number;
@@ -43,7 +55,15 @@ export type LambdaInvokeResponse = {
  * @param client AWSClient
  * @param request LambdaInvokeRequest
  * @returns Response
- */
+ * 
+ * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
+ * 
+ * @example
+ * ```ts
+ * const response = await lambdaInvoke(client, { functionName: 'functionName', payload: { id: '1234567890' } });
+ * console.log(response.response);
+ * ```
+*/
 export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeRequest): Promise<LambdaInvokeResponse> {
   const req: AWSRequest = {
     method: 'POST',
