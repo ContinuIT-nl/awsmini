@@ -35,6 +35,7 @@ export type LambdaInvokeResponse = {
   logResult: string | null;
   functionError: string | null;
   executedVersion: string | null;
+  requestId: string | null;
 };
 
 /**
@@ -44,12 +45,11 @@ export type LambdaInvokeResponse = {
  * @returns Response
  */
 export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeRequest): Promise<LambdaInvokeResponse> {
-  const body = new TextEncoder().encode(JSON.stringify(request.payload));
   const req: AWSRequest = {
     method: 'POST',
     service: 'lambda',
     path: `/2015-03-31/functions/${request.functionName}/invocations`,
-    body,
+    body: new TextEncoder().encode(JSON.stringify(request.payload)),
     headers: { 'content-type': 'application/json' },
     queryParameters: {},
     checkResponse: request.checkResponse ?? true,
@@ -63,7 +63,9 @@ export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeReque
     req.headers['x-amz-client-context'] = base64ClientContext;
   }
   if (request.qualifier) req.queryParameters['Qualifier'] = request.qualifier;
+
   const response = await client.execute(req);
+
   const logResult = response.headers.get('x-amz-log-result');
   return {
     response: await response.json(),
@@ -71,5 +73,6 @@ export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeReque
     logResult: logResult ? atob(logResult) : null,
     functionError: response.headers.get('x-amz-function-error'),
     executedVersion: response.headers.get('x-amz-executed-version'),
+    requestId: response.headers.get('x-amzn-requestid'),
   };
 }
