@@ -19,6 +19,22 @@
         "--allow-all"
       ],
       "attachSimplePort": 9229
+    },
+    {
+      "request": "launch",
+      "name": "Test Lambda",
+      "type": "node",
+      "program": "${workspaceFolder}/test/lambda.test.ts",
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "runtimeExecutable": "deno.exe",
+      "runtimeArgs": [
+        "test",
+        "--env-file=${workspaceFolder}/.env",
+        "--inspect-wait",
+        "--allow-all"
+      ],
+      "attachSimplePort": 9229
     }
   ]
 }

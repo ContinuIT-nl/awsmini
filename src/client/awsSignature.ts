@@ -21,11 +21,15 @@ export async function signRequest(request: AWSFullRequest, config: AWSConfig) {
   request.headers.host = request.host;
 
   // Determine the SHA256 of the content of the request
+  const hasBody = request.body && request.body.length > 0;
   if (!request.headers['x-amz-content-sha256']) {
-    const sha256 = request.body && request.body.length > 0 ? await hashSha256(request.body) : emptyHashSha256;
+    const sha256 = hasBody ? await hashSha256(request.body!) : emptyHashSha256;
     request.headers['x-amz-content-sha256'] = sha256;
   }
   const bodyHash = request.headers['x-amz-content-sha256'];
+  if (hasBody && !request.headers['content-length']) {
+    request.headers['content-length'] = request.body!.length.toString();
+  }
 
   // Include session token if provided
   if (config.sessionToken) {
@@ -38,13 +42,13 @@ export async function signRequest(request: AWSFullRequest, config: AWSConfig) {
   const date = dateTime.slice(0, 8);
 
   // Canonical query parameters
-  const parameterEntries = Object.entries(request.queryParameters).toSorted();
+  const parameterEntries = Object.entries(request.queryParameters).sort();
   const parameterString = parameterEntries.map(
     ([key, value]) => `${encodeRfc3986(key)}=${encodeRfc3986(value)}`,
   ).join('&');
 
   // Canonical headers (we might need to filter out some headers)
-  const headerEntries = Object.entries(request.headers).toSorted();
+  const headerEntries = Object.entries(request.headers).sort((a, b) => a[0] < b[0] ? -1 : 1);
   const headerString = headerEntries.map(([key, value]) => `${key}:${value.trim()}`).join('\n');
   const headerNames = headerEntries.map(([key]) => key).join(';');
 

@@ -8,7 +8,7 @@ export type HTTPMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
  * The service to use for the request.
  * This is used internally by AWSmini.
  */
-export type AWSRequestService = 's3';
+export type AWSRequestService = 's3' | 'lambda';
 
 /**
  * The request details used when calling `AWSClient.execute`.
@@ -16,7 +16,7 @@ export type AWSRequestService = 's3';
  */
 export type AWSRequest = {
   method: HTTPMethod;
-  subhost: string | undefined;
+  subhost?: string;
   path: string;
   service: AWSRequestService;
   queryParameters: Record<string, string>;

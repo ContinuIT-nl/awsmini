@@ -13,13 +13,15 @@ import {
 } from '../src/mod.ts';
 import { assert, assertEquals, assertIsError, assertThrows } from '@std/assert';
 import * as process from 'node:process';
-import { sleep, clientR2, clientAWS } from './testUtilities.ts';
+import { clientAWS, clientR2, sleep } from './testUtilities.ts';
 
 const bucketR2 = process.env.TEST_BUCKET_R2;
 const bucketAWS = process.env.TEST_BUCKET_AWS;
 
 if (!bucketR2 || !bucketAWS) {
-  throw new Error('TEST_BUCKET_R2 and TEST_BUCKET_AWS must be set. Please provide access to a test bucket in the environment variables.');
+  throw new Error(
+    'TEST_BUCKET_R2 and TEST_BUCKET_AWS must be set. Please provide access to a test bucket in the environment variables.',
+  );
 }
 
 Deno.test('s3PutObject', async () => {
@@ -127,7 +129,11 @@ This error was not caught from a test and caused the test runner to fail on the 
 It most likely originated from a dangling promise, event/timeout handler or top-level code.
  */
   assertThrows(async () => {
-    const result = s3HeadObject(clientR2, { bucket: bucketR2, key: 'afmd/afmd_20241203.json', signal: AbortSignal.timeout(10) });
+    const result = s3HeadObject(clientR2, {
+      bucket: bucketR2,
+      key: 'afmd/afmd_20241203.json',
+      signal: AbortSignal.timeout(10),
+    });
     console.log(result);
     await sleep(100);
   });
@@ -166,7 +172,7 @@ Deno.test('s3GetObjectStream', async () => {
   assert(result.ok, 'S3PutObject failed');
   const stream = await s3GetObjectStream(clientR2, { bucket: bucketR2, key: 'hello/world' });
   const reader = stream.getReader();
-  
+
   try {
     const streamResult = await reader.read();
     const text = new TextDecoder().decode(streamResult.value);

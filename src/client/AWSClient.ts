@@ -98,19 +98,40 @@ export class AWSClient {
       signal: fullRequest.signal,
     });
     if (request.checkResponse && !response.ok) {
-      const errorsText = await response.text();
-      const errors = errorsText.match(/<Error><Code>(.*?)<\/Code><Message>(.*?)<\/Message><\/Error>/);
+      const error = this.parseError(await response.text());
       throw new AwsminiError(
-        `HTTP ${response.status} ${response.statusText}: [${errors?.[1] ?? 'unknown error'}] ${
-          errors?.[2] ?? errorsText
-        }`,
+        `HTTP ${response.status} ${response.statusText}: [${error.code}] [${error.message}]`,
         'aws',
-        {
-          statusCode: response.status,
-        },
+        { statusCode: response.status },
       );
     }
     // todo: handle retries, timeouts, etc.
     return response;
+  }
+
+  /**
+   * Parse an error from an AWS response
+   *
+   * @param response - The response to parse the error from.
+   *
+   * @returns The error as a code and message string.
+   */
+  private parseError(errorsText: string): { code: string; message: string } {
+    // Extract error code and message from the response body
+    // S3 uses this format: <Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><RequestId>1234567890</RequestId><HostId>1234567890</HostId></Error>
+    if (errorsText.startsWith('<')) {
+      const errors = errorsText.match(/<Error><Code>(.*?)<\/Code><Message>(.*?)<\/Message><\/Error>/);
+      return { code: errors?.[1] ?? 'unknown_error', message: errors?.[2] ?? 'unknown error' };
+    }
+
+    // Lambda uses this format: {"message":"..."}
+    if (errorsText.startsWith('{')) {
+      const [err, error] = tryCatch(() => JSON.parse(errorsText));
+      if (err) return { code: 'unknown_error', message: errorsText };
+      return { code: 'json_error', message: error.message ?? 'unknown error' };
+    }
+
+    // Catch all other cases
+    return { code: 'unknown_error', message: errorsText };
   }
 }
