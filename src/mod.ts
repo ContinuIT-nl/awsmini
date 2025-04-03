@@ -30,7 +30,7 @@ export { S3MultipartUpload, S3MultipartUploadStream } from './s3/multiPartUpload
 
 // Lambda
 
-export { lambdaInvoke, type LambdaInvokeRequest } from './lambda/lambdaInvoke.ts';
+export { lambdaInvoke, type LambdaInvokeRequest, type LambdaInvokeResponse } from './lambda/lambdaInvoke.ts';
 export {
   lambdaListFunctions,
   type LambdaListFunctionsRequest,

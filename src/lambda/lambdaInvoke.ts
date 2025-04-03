@@ -8,9 +8,8 @@ import type { Prettify } from '../misc/utilities.ts';
  *
  * @typedef {Object} LambdaInvokeRequest
  * @property {string} functionName - The name of the function to invoke
- * @property {string} [accountId] - The account ID of the function to invoke
  * @property {Uint8Array} payload - The payload to invoke the function with
- * @property {string} [invocationType] - The invocation type to use
+ * @property {string} [invocationType] - The invocation type to use: 'RequestResponse' or 'Event' or 'DryRun'
  * @property {string} [logType] - The log type to use
  * @property {string} [clientContext] - The client context to use
  * @property {string} [qualifier] - The qualifier to use
@@ -22,8 +21,7 @@ import type { Prettify } from '../misc/utilities.ts';
 export type LambdaInvokeRequest = Prettify<
   AWSBaseRequest & {
     functionName: string;
-    accountId?: string | undefined; // like 123456789012
-    payload: Uint8Array;
+    payload: unknown;
     invocationType?: 'RequestResponse' | 'Event' | 'DryRun';
     logType?: 'Tail' | 'None';
     clientContext?: string;
@@ -31,18 +29,27 @@ export type LambdaInvokeRequest = Prettify<
   }
 >;
 
+export type LambdaInvokeResponse = {
+  response: unknown;
+  statusCode: number;
+  logResult: string | null;
+  functionError: string | null;
+  executedVersion: string | null;
+};
+
 /**
  * Invoke a Lambda function
  * @param client AWSClient
  * @param request LambdaInvokeRequest
  * @returns Response
  */
-export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeRequest): Promise<Response> {
+export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeRequest): Promise<LambdaInvokeResponse> {
+  const body = new TextEncoder().encode(JSON.stringify(request.payload));
   const req: AWSRequest = {
     method: 'POST',
     service: 'lambda',
     path: `/2015-03-31/functions/${request.functionName}/invocations`,
-    body: request.payload,
+    body,
     headers: { 'content-type': 'application/json' },
     queryParameters: {},
     checkResponse: request.checkResponse ?? true,
@@ -56,8 +63,13 @@ export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeReque
     req.headers['x-amz-client-context'] = base64ClientContext;
   }
   if (request.qualifier) req.queryParameters['Qualifier'] = request.qualifier;
-  return await client.execute(req);
-  // todo: headers['X-Amz-Log-Result'], check case sensitivity -> base64 decode
-  // todo: headers['x-amz-function-error'], check case sensitivity
-  // todo: headers['x-amz-executed-version'], check case sensitivity
+  const response = await client.execute(req);
+  const logResult = response.headers.get('x-amz-log-result');
+  return {
+    response: await response.json(),
+    statusCode: response.status,
+    logResult: logResult ? atob(logResult) : null,
+    functionError: response.headers.get('x-amz-function-error'),
+    executedVersion: response.headers.get('x-amz-executed-version'),
+  };
 }

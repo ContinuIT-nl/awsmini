@@ -1,7 +1,7 @@
 import * as process from 'node:process';
 import { clientAWS } from './testUtilities.ts';
 import { lambdaInvoke, lambdaListFunctions } from '../src/mod.ts';
-import { assert } from '@std/assert';
+import { assert, assertEquals, assertGreater } from '@std/assert';
 
 const lambdaName = process.env.LAMBDA_NAME;
 if (!lambdaName) {
@@ -9,15 +9,15 @@ if (!lambdaName) {
 }
 
 Deno.test('lambda - invoke', async () => {
-  const payload = new TextEncoder().encode(JSON.stringify({ id: '1234567890' }));
-  const result = await lambdaInvoke(clientAWS, { functionName: lambdaName, payload });
-  const response = await result.json();
-  console.log(JSON.stringify(response, null, 2));
+  const payload = { id: '1234567890' };
+  const result = await lambdaInvoke(clientAWS, { functionName: lambdaName, payload, logType: 'Tail' });
+  assertEquals(result.response, 'TEST');
+  console.log(result.logResult ?? 'no log result');
 });
 
 Deno.test('lambda - list functions', async () => {
   const result = await lambdaListFunctions(clientAWS, {});
   const functionNames = result.Functions.map((f) => f.FunctionName);
-  assert(functionNames.length > 0);
+  assertGreater(functionNames.length, 0);
   assert(functionNames.includes(lambdaName));
 });
