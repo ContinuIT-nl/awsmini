@@ -28,3 +28,12 @@ export const clientAWS = new AWSClient({
   region: process.env.AWS2_REGION,
   fetch: logFetch,
 });
+
+export const clientAWS3 = new AWSClient({
+  endpoint: '',
+  accessKeyId: process.env.AWS3_ACCESS_KEY,
+  secretAccessKey: process.env.AWS3_SECRET_KEY,
+  sessionToken: process.env.AWS3_SESSION_TOKEN,
+  region: process.env.AWS3_REGION,
+  fetch: logFetch,
+});

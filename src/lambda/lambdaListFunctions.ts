@@ -176,13 +176,16 @@ export async function lambdaListFunctions(
  * for await (const func of lambdaListFunctionsAll(client, {})) {
  *   console.log(func.FunctionName);
  * }
- * ```  
+ * ```
  */
-export async function *lambdaListFunctionsAll(client: AWSClient, request: LambdaListFunctionsRequest): AsyncGenerator<LambdaFunction> {
+export async function* lambdaListFunctionsAll(
+  client: AWSClient,
+  request: LambdaListFunctionsRequest,
+): AsyncGenerator<LambdaFunction> {
   for (;;) {
     const result = await lambdaListFunctions(client, request);
     for (const func of result.Functions) yield func;
     if (!result.NextMarker) break;
     request.marker = result.NextMarker;
   }
-};
+}
