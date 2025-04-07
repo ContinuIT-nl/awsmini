@@ -33,7 +33,7 @@ export type LambdaInvokeRequest = Prettify<
  * LambdaInvokeResponse
  *
  * @typedef {Object} LambdaInvokeResponse
- * 
+ *
  * @property {unknown} response - The response from the function (JSON decoded)
  * @property {number} statusCode - The status code of the response
  * @property {string|null} logResult - The log tail from the function if logType = 'Tail' was in the request
@@ -55,15 +55,15 @@ export type LambdaInvokeResponse = {
  * @param client AWSClient
  * @param request LambdaInvokeRequest
  * @returns Response
- * 
+ *
  * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
- * 
+ *
  * @example
  * ```ts
  * const response = await lambdaInvoke(client, { functionName: 'functionName', payload: { id: '1234567890' } });
  * console.log(response.response);
  * ```
-*/
+ */
 export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeRequest): Promise<LambdaInvokeResponse> {
   const req: AWSRequest = {
     method: 'POST',
