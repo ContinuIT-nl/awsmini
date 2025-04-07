@@ -1,15 +1,15 @@
 # awsmini
 
-Access AWS (compatible) services fast in with simple tree shakeable code
+Access AWS (compatible) services fast with simple tree-shakeable code
 
 This module is a work in progress.
 
 ## Setup AWS client
 
-The class AWSClient is used to perform the request you want to do.
-Weh setting up an instance you can specify the credentials and a few other parameters.
+The class AWSClient is used to perform the requests you want to make.
+When setting up an instance, you can specify the credentials and a few other parameters.
 
-If you want to set the parameters manually you can do:
+If you want to set the parameters manually, you can do:
 
 ```typescript
 const client = new AWSClient({
@@ -20,9 +20,9 @@ const client = new AWSClient({
 });
 ```
 
-If the class is instantiated in a non browser environment you can get the information from a different number of sources:
+If the class is instantiated in a non-browser environment, you can get the information from a different number of sources:
 
-### from environment variables
+### From environment variables
 
 ```typescript
 const client = new AWSClient(clientConfigEnv());
@@ -39,19 +39,19 @@ AWS_REGION=auto
 
 ### From `~/.aws`
 
-To be implemeneted
+To be implemented
 
 ### From SSO
 
-To be implemeneted
+To be implemented
 
 ### From IMDSv2
 
-To be implemeneted
+To be implemented
 
-### combining several sources
+### Combining several sources
 
-better explanation here
+Better explanation here
 
 ```typescript
 const client = new AWSClient(clientConfigEnv(clientConfigFromSSO()));
@@ -151,8 +151,8 @@ console.log('Delete successful:', response.ok);
 
 ### S3ListObjects
 
-Warn about the 1000 file limit (eg pagination), reference the wrapper
-Explain that when using a delimiter you get common prefixes, no delimiter you get files
+Warning: There is a 1000 file limit (see pagination). Reference the wrapper.
+Note: When using a delimiter, you get common prefixes; without a delimiter, you get files.
 
 ```typescript
 import { s3ListObjects } from './src/s3/s3ListObjects.ts';
@@ -172,7 +172,7 @@ console.log('Files:', result.contents.map((item) => item.key));
 
 ### S3CreateMultipartUpload
 
-Mention the wrapper
+See the wrapper for more details.
 
 ```typescript
 import { s3CreateMultipartUpload } from './src/s3/s3CreateMultipartUpload.ts';
@@ -190,8 +190,7 @@ console.log('Multipart upload initiated with ID:', uploadId);
 
 ### S3UploadPart
 
-Mention the 5MB limit and (upper limit?)
-Mention the 10000 parts limit
+Note: There is a 5MB minimum limit and a 10000 parts maximum limit.
 
 ```typescript
 import { s3UploadPart } from './src/s3/s3UploadPart.ts';
@@ -240,7 +239,7 @@ const response = await s3CompleteMultipartUpload(client, {
 console.log('Multipart upload completed successfully:', response.status === 200);
 ```
 
-### s3AbortMultipartUpload
+### S3AbortMultipartUpload
 
 ```typescript
 import { s3AbortMultipartUpload } from './src/s3/s3AbortMultipartUpload.ts';
