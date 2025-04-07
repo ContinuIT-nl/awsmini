@@ -33,7 +33,7 @@ export async function signRequest(request: AWSFullRequest, config: AWSConfig) {
 
   // Include session token if provided
   if (config.sessionToken) {
-    request.queryParameters['x-amz-security-token'] = config.sessionToken;
+    request.headers['x-amz-security-token'] = config.sessionToken;
   }
 
   // Set date to current date if not provided
