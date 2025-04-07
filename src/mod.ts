@@ -35,6 +35,7 @@ export {
   lambdaListFunctions,
   type LambdaListFunctionsRequest,
   type LambdaListFunctionsResponse,
+  lambdaListFunctionsAll,
 } from './lambda/lambdaListFunctions.ts';
 
 // DynamoDB
