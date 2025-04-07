@@ -44,11 +44,8 @@ export type S3MultipartUploadRequest = Prettify<
  */
 export async function S3MultipartUpload(client: AWSClient, request: S3MultipartUploadRequest): Promise<void> {
   const uploadId = await s3CreateMultipartUpload(client, request);
+  const etags: string[] = [];
   try {
-    const xml = [
-      '<?xml version="1.0" encoding="UTF-8"?>',
-      '<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
-    ];
     // The parts list must be specified in order by part number.
     for (let partNumber = 1;;) {
       const { body, isFinalPart } = await request.nextPart(partNumber);
@@ -69,22 +66,19 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
       if (!etag) {
         throw new AwsminiError('No etag returned from S3UploadPart', 's3');
       }
-      xml.push(`<Part><ETag>${xmlEscape(etag)}</ETag><PartNumber>${partNumber}</PartNumber></Part>`);
+      etags.push(etag);
       if (isFinalPart) break;
       if (partNumber >= 10000) {
         throw new AwsminiError('Too many parts (max 10000)', 's3');
       }
       partNumber++;
     }
-    xml.push('</CompleteMultipartUpload>');
-    const body = new TextEncoder().encode(xml.join(''));
-
     await s3CompleteMultipartUpload(client, {
       bucket: request.bucket,
       key: request.key,
       uploadId,
       signal: request.signal,
-      body,
+      body: buildMultipartUploadBody(etags),
     });
   } catch (error) {
     await s3AbortMultipartUpload(client, {
@@ -97,6 +91,22 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
       cause: error instanceof Error ? error : new Error(String(error)), // todo: makeError in  utilities.ts
     });
   }
+}
+
+
+/**
+ * Builds the body for a complete multipart upload request.
+ * @param etags - The etags of the parts to upload.
+ * @returns The body for a complete multipart upload request.
+ */
+export const buildMultipartUploadBody = (etags: string[]) => {
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    ...etags.map((etag, i) => `<Part><ETag>${xmlEscape(etag)}</ETag><PartNumber>${i + 1}</PartNumber></Part>`),
+    '</CompleteMultipartUpload>',
+  ];
+  return new TextEncoder().encode(xml.join(''));
 }
 
 export type S3MultipartUploadStreamRequest = Prettify<

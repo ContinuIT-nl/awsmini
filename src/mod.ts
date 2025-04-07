@@ -22,7 +22,7 @@ export { s3AbortMultipartUpload, type S3AbortMultipartUploadRequest } from './s3
 
 export type { ListObjectResult, S3Bucket, S3BucketListResult, S3Object, S3Owner } from './s3/types.ts';
 
-export { S3MultipartUpload, S3MultipartUploadStream } from './s3/multiPartUpload.ts';
+export { S3MultipartUpload, S3MultipartUploadStream, buildMultipartUploadBody } from './s3/multiPartUpload.ts';
 
 // SQS
 

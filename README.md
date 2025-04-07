@@ -219,21 +219,12 @@ import { s3CompleteMultipartUpload } from './src/s3/s3CompleteMultipartUpload.ts
 const client = obtainClient(); // See Setup AWS client
 
 // Complete a multipart upload with the ETags of all parts
-const completeXml = [
-  '<?xml version="1.0" encoding="UTF-8"?>',
-  '<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
-  '<Part><ETag>"a54357aff0632cce46d942af68356b38"</ETag><PartNumber>1</PartNumber></Part>',
-  '<Part><ETag>"0c78aef83f66abc1fa1e8477f296d394"</ETag><PartNumber>2</PartNumber></Part>',
-  '</CompleteMultipartUpload>',
-].join('');
-
-const body = new TextEncoder().encode(completeXml);
 
 const response = await s3CompleteMultipartUpload(client, {
   bucket: 'my-bucket',
   key: 'large-file.zip',
   uploadId: 'YOUR_UPLOAD_ID',
-  body,
+  body: buildMultipartUploadBody(['etag1', 'etag2', 'etag3'])
 });
 
 console.log('Multipart upload completed successfully:', response.status === 200);
