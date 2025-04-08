@@ -222,7 +222,7 @@ const response = await s3CompleteMultipartUpload(client, {
   bucket: 'my-bucket',
   key: 'large-file.zip',
   uploadId: 'YOUR_UPLOAD_ID',
-  body: buildMultipartUploadBody(['etag1', 'etag2', 'etag3'])
+  body: buildMultipartUploadBody(['etag1', 'etag2', 'etag3']),
 });
 
 console.log('Multipart upload completed successfully:', response.status === 200);
@@ -277,4 +277,3 @@ const response = await lambdaInvoke(client, {
 });
 console.log(response.response, response.statusCode, ... );
 ```
-

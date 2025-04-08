@@ -34,10 +34,10 @@ export type S3CompleteMultipartUploadRequest = Prettify<S3KeyRequest & { uploadI
  *
  * @example
  * ```ts
- * const response = await S3CompleteMultipartUpload(client, { 
- *   bucket: 'bucket', 
- *   key: 'key', 
- *   uploadId: 'uploadId', 
+ * const response = await S3CompleteMultipartUpload(client, {
+ *   bucket: 'bucket',
+ *   key: 'key',
+ *   uploadId: 'uploadId',
  *   body: buildMultipartUploadBody(['etag1', 'etag2', 'etag3'])
  * });
  * console.log(response.ok, response.headers);

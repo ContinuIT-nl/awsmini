@@ -93,13 +93,12 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
   }
 }
 
-
 /**
  * Builds the body for a complete multipart upload request.
  * @param etags - The etags of the parts to upload.
  * @returns The body for a complete multipart upload request.
  */
-export const buildMultipartUploadBody = (etags: string[]) => {
+export const buildMultipartUploadBody = (etags: string[]): Uint8Array => {
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
@@ -107,7 +106,7 @@ export const buildMultipartUploadBody = (etags: string[]) => {
     '</CompleteMultipartUpload>',
   ];
   return new TextEncoder().encode(xml.join(''));
-}
+};
 
 export type S3MultipartUploadStreamRequest = Prettify<
   Omit<S3MultipartUploadRequest, 'nextPart'> & { stream: ReadableStream<Uint8Array> }
