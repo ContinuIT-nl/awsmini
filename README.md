@@ -20,8 +20,6 @@ const client = new AWSClient({
 });
 ```
 
-If the class is instantiated in a non-browser environment, you can get the information from a different number of sources:
-
 ### From environment variables
 
 ```typescript
@@ -59,7 +57,7 @@ const client = new AWSClient(clientConfigEnv(clientConfigFromSSO()));
 
 ## S3 Examples
 
-### S3CopyObject
+### s3CopyObject
 
 ```typescript
 import { s3CopyObject } from './src/s3/s3CopyObject.ts';
@@ -77,7 +75,7 @@ const response = await s3CopyObject(client, {
 console.log('Copy successful:', response.ok);
 ```
 
-### S3GetObject
+### s3GetObject
 
 ```typescript
 import { s3GetObject } from './src/s3/s3GetObject.ts';
@@ -95,7 +93,7 @@ const textContent = new TextDecoder().decode(data);
 console.log('File content:', textContent);
 ```
 
-### S3HeadObject
+### s3HeadObject
 
 ```typescript
 import { s3HeadObject } from './src/s3/s3HeadObject.ts';
@@ -113,7 +111,7 @@ console.log('ETag:', response.headers.get('etag'));
 console.log('Content length:', response.headers.get('content-length'));
 ```
 
-### S3PutObject
+### s3PutObject
 
 ```typescript
 import { s3PutObject } from './src/s3/s3PutObject.ts';
@@ -133,7 +131,7 @@ const response = await s3PutObject(client, {
 console.log('Upload successful:', response.status === 200);
 ```
 
-### S3DeleteObject
+### s3DeleteObject
 
 ```typescript
 import { s3DeleteObject } from './src/s3/s3DeleteObject.ts';
@@ -149,7 +147,7 @@ const response = await s3DeleteObject(client, {
 console.log('Delete successful:', response.ok);
 ```
 
-### S3ListObjects
+### s3ListObjects
 
 Warning: There is a 1000 file limit (see pagination). Reference the wrapper.
 Note: When using a delimiter, you get common prefixes; without a delimiter, you get files.
@@ -170,7 +168,7 @@ console.log('Folders:', result.commonPrefixes);
 console.log('Files:', result.contents.map((item) => item.key));
 ```
 
-### S3CreateMultipartUpload
+### s3CreateMultipartUpload
 
 See the wrapper for more details.
 
@@ -188,7 +186,7 @@ const uploadId = await s3CreateMultipartUpload(client, {
 console.log('Multipart upload initiated with ID:', uploadId);
 ```
 
-### S3UploadPart
+### s3UploadPart
 
 Note: There is a 5MB minimum limit and a 10000 parts maximum limit.
 
@@ -211,7 +209,7 @@ const etag = response.headers.get('etag');
 console.log('Part uploaded with ETag:', etag);
 ```
 
-### S3CompleteMultipartUpload
+### s3CompleteMultipartUpload
 
 ```typescript
 import { s3CompleteMultipartUpload } from './src/s3/s3CompleteMultipartUpload.ts';
@@ -230,7 +228,7 @@ const response = await s3CompleteMultipartUpload(client, {
 console.log('Multipart upload completed successfully:', response.status === 200);
 ```
 
-### S3AbortMultipartUpload
+### s3AbortMultipartUpload
 
 ```typescript
 import { s3AbortMultipartUpload } from './src/s3/s3AbortMultipartUpload.ts';
@@ -247,7 +245,7 @@ const response = await s3AbortMultipartUpload(client, {
 console.log('Multipart upload aborted successfully:', response.status === 204);
 ```
 
-### S3ListBuckets
+### s3ListBuckets
 
 ```typescript
 import { s3ListBuckets } from './src/s3/s3ListBuckets.ts';
@@ -259,3 +257,24 @@ const result = await s3ListBuckets(client, {});
 
 console.log('Buckets:', result.buckets.map((bucket) => bucket.name));
 ```
+
+## Lambda
+
+### lambda - lambdaListFunctionsAll
+
+```ts
+for await (const func of lambdaListFunctionsAll(client, {})) {
+  console.log(func.FunctionName);
+}
+```
+
+### lambda - lambdaInvoke
+
+```ts
+const response = await lambdaInvoke(client, { 
+  functionName: 'functionName', 
+  payload: { id: '1234567890' } 
+});
+console.log(response.response, response.statusCode, ... );
+```
+
