@@ -88,7 +88,7 @@ export async function lambdaInvoke(client: AWSClient, request: LambdaInvokeReque
     signal: request.signal,
   };
   addQueryParameters(request, req, ['qualifier']);
-  
+
   // Execute the request
   const response = await client.execute(req);
 

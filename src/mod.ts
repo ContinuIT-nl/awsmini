@@ -33,9 +33,9 @@ export { buildMultipartUploadBody, S3MultipartUpload, S3MultipartUploadStream } 
 export { lambdaInvoke, type LambdaInvokeRequest, type LambdaInvokeResponse } from './lambda/lambdaInvoke.ts';
 export {
   lambdaListFunctions,
-  lambdaListFunctionsAll,
   type LambdaListFunctionsRequest,
   type LambdaListFunctionsResponse,
 } from './lambda/lambdaListFunctions.ts';
+export { lambdaListFunctionsAll, type LambdaListFunctionsAllRequest } from './lambda/lambdaListFunctionsAll.ts';
 
 // DynamoDB
