@@ -4,6 +4,8 @@ import type { ClientConfig } from './clientConfig.ts';
 import { AwsminiError } from '../misc/AwsminiError.ts';
 import { encodeRfc3986, tryCatch } from '../misc/utilities.ts';
 
+const defaulthttps = (endpoint: string) => endpoint.includes('://') ? endpoint : `https://${endpoint}`;
+
 /**
  * AWS Client
  *
@@ -46,7 +48,9 @@ export class AWSClient {
     if (!clientConfig.region) errors.push('region is not set');
     if (!clientConfig.accessKeyId) errors.push('accessKeyId is not set');
     if (!clientConfig.secretAccessKey) errors.push('secretAccessKey is not set');
-    const [err, url] = tryCatch(() => clientConfig.endpoint ? new URL(clientConfig.endpoint) : undefined);
+    const [err, url] = tryCatch(
+      () => clientConfig.endpoint ? new URL(defaulthttps(clientConfig.endpoint)) : undefined,
+    );
     if (err) errors.push('endpoint is not a valid URL or empty');
     if (errors.length > 0) throw new AwsminiError(errors.join(', '), 'clientConfig');
 

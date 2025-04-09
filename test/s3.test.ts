@@ -11,16 +11,17 @@ import {
   S3MultipartUploadStream,
   s3PutObject,
 } from '../src/mod.ts';
-import { assert, assertEquals, assertIsError, assertThrows } from '@std/assert';
+import { assert, assertEquals, assertIsError } from '@std/assert';
 import * as process from 'node:process';
-import { clientAWS, clientR2, sleep } from './testUtilities.ts';
+import { clientAWS, clientR2, clientS3H } from './testUtilities.ts';
+import { tryCatchAsync } from '../src/misc/utilities.ts';
 
 const bucketR2 = process.env.TEST_BUCKET_R2;
 const bucketAWS = process.env.TEST_BUCKET_AWS;
-
-if (!bucketR2 || !bucketAWS) {
+const bucketS3H = process.env.TEST_BUCKET_S3H;
+if (!bucketR2 || !bucketAWS || !bucketS3H) {
   throw new Error(
-    'TEST_BUCKET_R2 and TEST_BUCKET_AWS must be set. Please provide access to a test bucket in the environment variables.',
+    'TEST_BUCKET_R2 and TEST_BUCKET_AWS and TEST_BUCKET_S3H must be set. Please provide access to a test bucket in the environment variables.',
   );
 }
 
@@ -30,7 +31,17 @@ Deno.test('s3PutObject', async () => {
   const result2 = await s3GetObjectText(clientR2, { bucket: bucketR2, key: 'hello/world' });
   assertEquals(result2, 'Hello World');
 });
+
 // todo: properties
+
+Deno.test('s3PutObject - Hetzner', async () => {
+  const result = await s3PutObject(clientS3H, { bucket: bucketS3H, key: 'hello/world', body: 'Hello World' });
+  assert(result.ok, 'S3PutObject failed');
+  const result2 = await s3GetObjectText(clientS3H, { bucket: bucketS3H, key: 'hello/world' });
+  assertEquals(result2, 'Hello World');
+  const result3 = await s3DeleteObject(clientS3H, { bucket: bucketS3H, key: 'hello/world' });
+  assert(result3.ok, 's3DeleteObject failed');
+});
 
 Deno.test('s3PutObject - with sha256', async () => {
   const result = await s3PutObject(clientAWS, {
@@ -120,7 +131,7 @@ Deno.test('s3HeadObject', async () => {
   assertEquals(result.headers.get('content-length'), '100');
 });
 
-Deno.test.ignore('s3HeadObject abort', async () => {
+Deno.test('s3HeadObject abort', async () => {
   // todo: the test fails
   /*
 error: AssertionError: Expected function to throw.
@@ -128,16 +139,13 @@ error: (in promise) TimeoutError: Signal timed out.
 This error was not caught from a test and caused the test runner to fail on the referenced module.
 It most likely originated from a dangling promise, event/timeout handler or top-level code.
  */
-  assertThrows(async () => {
-    const result = s3HeadObject(clientR2, {
-      bucket: bucketR2,
-      key: 'afmd/afmd_20241203.json',
-      signal: AbortSignal.timeout(10),
-    });
-    console.log(result);
-    await sleep(100);
-  });
-  await sleep(100);
+  const [err, result] = await tryCatchAsync(s3HeadObject(clientR2, {
+    bucket: bucketR2,
+    key: 'hello/world',
+    signal: AbortSignal.timeout(10),
+  }));
+  assertEquals(err?.name, 'TimeoutError', 's3HeadObject should have failed with TimeoutError');
+  assertEquals(result, null, 's3HeadObject timed out, no result should be returned');
 });
 
 Deno.test('s3GetObject', async () => {

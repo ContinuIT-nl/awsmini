@@ -33,7 +33,7 @@ Deno.test('awsClient invalid url', () => {
       accessKeyId: 'test-access-key',
       secretAccessKey: 'test-secret-key',
       region: 'us-east-1',
-      endpoint: 'invalid-url',
+      endpoint: 'invalid url',
     })
   );
   assert(!!error, 'An error should have been thrown');

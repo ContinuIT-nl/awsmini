@@ -19,7 +19,13 @@ const logFetch = async (input: string | URL | globalThis.Request, init?: Request
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Clients
-export const clientR2 = new AWSClient(clientConfigEnv({ fetch: logFetch }));
+export const clientR2 = new AWSClient({
+  endpoint: process.env.R2_ENDPOINT_URL,
+  accessKeyId: process.env.R2_ACCESS_KEY,
+  secretAccessKey: process.env.R2_SECRET_KEY,
+  region: process.env.R2_REGION,
+  fetch: logFetch,
+});
 
 export const clientAWS = new AWSClient({
   endpoint: '',
@@ -29,11 +35,12 @@ export const clientAWS = new AWSClient({
   fetch: logFetch,
 });
 
-export const clientAWS3 = new AWSClient({
-  endpoint: '',
-  accessKeyId: process.env.AWS3_ACCESS_KEY,
-  secretAccessKey: process.env.AWS3_SECRET_KEY,
-  sessionToken: process.env.AWS3_SESSION_TOKEN,
-  region: process.env.AWS3_REGION,
+export const clientS3H = new AWSClient({
+  endpoint: process.env.S3H_ENDPOINT,
+  accessKeyId: process.env.S3H_ACCESS_KEY,
+  secretAccessKey: process.env.S3H_SECRET_KEY,
+  region: process.env.S3H_REGION,
   fetch: logFetch,
 });
+
+export const clientAWS2 = new AWSClient(clientConfigEnv({ fetch: logFetch }));
