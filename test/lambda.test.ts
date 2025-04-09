@@ -15,6 +15,16 @@ Deno.test('lambda - invoke', async () => {
     logType: 'Tail',
   });
   assertEquals(result.response, 'TEST');
+  assert(result.logResult, 'log result should be present');
+
+  const result2 = await lambdaInvoke(clientAWS, {
+    functionName: lambdaName,
+    payload: { id: '1234567890' },
+    clientContext: { test: 'test' },
+    checkResponse: true,
+  });
+  assertEquals(result2.response, 'TEST');
+  assert(!result2.logResult, 'log result should be empty');
   // console.log(result.logResult ?? 'no log result');
 });
 

@@ -15,6 +15,14 @@ export const addQueryParameters = <T extends Record<string, unknown>>(
   }
 };
 
+export const setHeaders = (headers: Record<string, unknown>) => {
+  return Object.fromEntries(
+    Object.entries(headers)
+      .filter(([_, value]) => value !== undefined)
+      .map(([key, value]) => [key, String(value)]),
+  );
+};
+
 export const encodeRfc3986 = (str: string) =>
   encodeURIComponent(str).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 
