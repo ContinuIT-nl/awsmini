@@ -1,7 +1,9 @@
 import * as process from 'node:process';
-import { clientAWS, clientAWS2 } from './testUtilities.ts';
+import { clientAWS } from './testUtilities.ts';
 import { lambdaInvoke, lambdaListFunctions, lambdaListFunctionsAll } from '../src/mod.ts';
-import { assert, assertEquals, assertGreater } from '@std/assert';
+import { assert, assertEquals, assertGreater, assertIsError } from '@std/assert';
+import { tryCatchAsync } from '../src/misc/utilities.ts';
+import { AwsminiError } from '../src/misc/AwsminiError.ts';
 
 const lambdaName = process.env.LAMBDA_NAME;
 if (!lambdaName) {
@@ -28,6 +30,14 @@ Deno.test('lambda - invoke', async () => {
   // console.log(result.logResult ?? 'no log result');
 });
 
+Deno.test('lambda - invoke - error', async () => {
+  const [error, result] = await tryCatchAsync(
+    lambdaInvoke(clientAWS, { functionName: 'non-existing-function-name', payload: {} }),
+  );
+  assertIsError(error, AwsminiError, '404');
+  assert(!result, 'result should be undefined');
+});
+
 Deno.test('lambda - list functions', async () => {
   const result = await lambdaListFunctions(clientAWS, {});
   const functionNames = result.Functions.map((f) => f.FunctionName);
@@ -37,7 +47,7 @@ Deno.test('lambda - list functions', async () => {
 
 Deno.test('lambda - list functions', async () => {
   const funcs: string[] = [];
-  for await (const func of lambdaListFunctionsAll(clientAWS2, {})) {
+  for await (const func of lambdaListFunctionsAll(clientAWS, {})) {
     funcs.push(func.FunctionName);
   }
   assertGreater(funcs.length, 0);
