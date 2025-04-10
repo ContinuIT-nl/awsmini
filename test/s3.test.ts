@@ -207,9 +207,11 @@ Deno.test('s3GetObjectStream - not found', async () => {
 });
 
 Deno.test('s3GetObjectText', async () => {
+  await s3PutObject(clientR2, { bucket: bucketR2, key: 'hello/world', body: 'Hello World' });
   const text = await s3GetObjectText(clientR2, { bucket: bucketR2, key: 'hello/world' });
   assertEquals(text, 'Hello World');
 });
+
 Deno.test('s3ListObjects R2', async () => {
   const list = await s3ListObjects(clientR2, { bucket: bucketR2, prefix: '' });
   assert(list.content.length > 0, 'S3ListObjects returned no content');
