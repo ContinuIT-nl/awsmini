@@ -1,5 +1,5 @@
 import { tryCatch } from '../src/misc/utilities.ts';
-import { AWSClient } from '../src/mod.ts';
+import { AWSClient, clientConfigEnv } from '../src/mod.ts';
 import { assert, assertIsError } from '@std/assert';
 
 Deno.test('awsClient missing region', () => {
@@ -86,4 +86,9 @@ Deno.test('awsClient with valid minimal config', () => {
     region: 'us-east-1',
   });
   assert(client instanceof AWSClient, 'Should create a valid AWSClient instance');
+});
+
+Deno.test('config - env', () => {
+  const config = clientConfigEnv({});
+  assert(config, 'Should create a valid AWSClient instance');
 });
