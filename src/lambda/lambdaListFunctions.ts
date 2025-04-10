@@ -1,6 +1,6 @@
 import type { AWSBaseRequest, AWSRequest } from '../misc/awsTypes.ts';
 import type { AWSClient } from '../client/AWSClient.ts';
-import type { Prettify } from '../misc/utilities.ts';
+import { capitalize, type Prettify } from '../misc/utilities.ts';
 
 // todo: see if we need to compose this type and reuse parts in other lambda calls.
 
@@ -151,16 +151,17 @@ export async function lambdaListFunctions(
     method: 'GET',
     service: 'lambda',
     path: '/2015-03-31/functions',
-    queryParameters: {},
+    queryParameters: capitalize({
+      FunctionVersion: request.functionVersion,
+      Marker: request.marker,
+      MasterRegion: request.masterRegion,
+      MaxItems: request.maxItems ? request.maxItems.toString() : undefined,
+    }) ?? {},
     headers: {},
     checkResponse: request.checkResponse ?? true,
     signal: request.signal,
   };
-  // todo: automate these
-  if (request.functionVersion) req.queryParameters['FunctionVersion'] = request.functionVersion;
-  if (request.marker) req.queryParameters['Marker'] = request.marker;
-  if (request.masterRegion) req.queryParameters['MasterRegion'] = request.masterRegion;
-  if (request.maxItems) req.queryParameters['MaxItems'] = request.maxItems.toString();
   const response = await client.execute(req);
   return await response.json() as LambdaListFunctionsResponse;
+  // todo: do we need some pedantic mode where we typecheck the response?
 }
