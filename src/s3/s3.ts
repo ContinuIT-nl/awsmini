@@ -43,17 +43,11 @@ export type AWSIfOptions = {
 
 export const awsAddIfOptions = (req: AWSRequest, options: AWSIfOptions) => {
   // Validate options
-  if (options.ifMatch && !options.ifNoneMatch) {
+  if (options.ifMatch && options.ifNoneMatch) {
     throw new AwsminiError('ifMatch and ifNoneMatch cannot be used together', 's3');
   }
-  if (options.ifNoneMatch && !options.ifMatch) {
-    throw new AwsminiError('ifNoneMatch and ifMatch cannot be used together', 's3');
-  }
-  if (options.ifModifiedSince && !options.ifUnmodifiedSince) {
+  if (options.ifModifiedSince && options.ifUnmodifiedSince) {
     throw new AwsminiError('ifModifiedSince and ifUnmodifiedSince cannot be used together', 's3');
-  }
-  if (options.ifUnmodifiedSince && !options.ifModifiedSince) {
-    throw new AwsminiError('ifUnmodifiedSince and ifModifiedSince cannot be used together', 's3');
   }
 
   // Add options

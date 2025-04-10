@@ -11,10 +11,12 @@ import {
   S3MultipartUploadStream,
   s3PutObject,
 } from '../src/mod.ts';
+import { awsAddIfOptions } from '../src/s3/s3.ts';
 import { assert, assertEquals, assertIsError } from '@std/assert';
 import * as process from 'node:process';
 import { clientAWS, clientR2, clientS3H } from './testUtilities.ts';
-import { tryCatchAsync } from '../src/misc/utilities.ts';
+import { tryCatch, tryCatchAsync } from '../src/misc/utilities.ts';
+import type { AWSRequest } from '../src/misc/awsTypes.ts';
 
 const bucketR2 = process.env.TEST_BUCKET_R2;
 const bucketAWS = process.env.TEST_BUCKET_AWS;
@@ -302,4 +304,61 @@ Deno.test('multipartUploadStream', async () => {
   const response = await s3HeadObject(clientR2, { bucket: bucketR2, key: 'hello/stream' });
   assert(response.ok, 'S3HeadObject failed');
   assertEquals(response.headers.get('content-length'), `${body.byteLength}`);
+});
+
+Deno.test('awsAddIfOptions', () => {
+  // Test valid options
+  const validRequest: AWSRequest = {
+    headers: {},
+    method: 'GET',
+    path: '/',
+    service: 's3',
+    queryParameters: {},
+    checkResponse: true,
+  };
+
+  // Test 1. Just no options
+  const request1 = { ...validRequest };
+  awsAddIfOptions(request1, {});
+  assertEquals(request1.headers['If-Match'], undefined);
+  assertEquals(request1.headers['If-Modified-Since'], undefined);
+
+  // Test 2. ifMatch
+  const request2 = { ...validRequest };
+  awsAddIfOptions(request2, {
+    ifMatch: 'etag1',
+    ifModifiedSince: 'date1',
+  });
+  assertEquals(request2.headers['If-Match'], 'etag1');
+  assertEquals(request2.headers['If-Modified-Since'], 'date1');
+
+  // Test 3. ifNoneMatch
+  const request3 = { ...validRequest };
+  awsAddIfOptions(request3, {
+    ifNoneMatch: 'etag2',
+    ifUnmodifiedSince: 'date2',
+  });
+  assertEquals(request3.headers['If-None-Match'], 'etag2');
+  assertEquals(request3.headers['If-Unmodified-Since'], 'date2');
+
+  // Test 4. Invalid options
+  const request4 = { ...validRequest };
+  const [error] = tryCatch(() =>
+    awsAddIfOptions(request4, {
+      ifMatch: 'etag1',
+      ifNoneMatch: 'etag2',
+    })
+  );
+  assertIsError(error);
+  assert(error.message.includes('ifMatch and ifNoneMatch cannot be used together'));
+
+  const request5 = { ...validRequest };
+  const [error2] = tryCatch(() =>
+    awsAddIfOptions(request5, {
+      ifModifiedSince: 'date1',
+      ifUnmodifiedSince: 'date2',
+    })
+  );
+  assertIsError(error2);
+  assert(error2.message.includes('ifModifiedSince and ifUnmodifiedSince cannot be used together'));
 });
