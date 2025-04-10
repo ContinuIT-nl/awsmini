@@ -1,4 +1,5 @@
-import { AWSClient, clientConfigEnv } from '../src/mod.ts';
+// deno-coverage-ignore-file
+import { AWSClient } from '../src/mod.ts';
 import * as process from 'node:process';
 
 const headersToString = (headers: Headers) =>
@@ -29,9 +30,9 @@ export const clientR2 = new AWSClient({
 
 export const clientAWS = new AWSClient({
   endpoint: '',
-  accessKeyId: process.env.AWS2_ACCESS_KEY,
-  secretAccessKey: process.env.AWS2_SECRET_KEY,
-  region: process.env.AWS2_REGION,
+  accessKeyId: process.env.AWSCIT_ACCESS_KEY,
+  secretAccessKey: process.env.AWSCIT_SECRET_KEY,
+  region: process.env.AWSCIT_REGION,
   fetch: logFetch,
 });
 
@@ -42,5 +43,3 @@ export const clientS3H = new AWSClient({
   region: process.env.S3H_REGION,
   fetch: logFetch,
 });
-
-export const clientAWS2 = new AWSClient(clientConfigEnv({ fetch: logFetch }));

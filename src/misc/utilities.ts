@@ -73,3 +73,12 @@ export const tryCatch = <T>(fn: () => T): TryResult<T> => {
     return [ensureError(error), null];
   }
 };
+
+export const capitalize = (obj: Record<string, unknown> | undefined) =>
+  obj
+    ? Object.fromEntries(
+      Object.entries(obj)
+        .filter(([, value]) => value !== undefined)
+        .map(([key, value]) => [key.charAt(0).toUpperCase() + key.slice(1), String(value)]),
+    )
+    : undefined;
