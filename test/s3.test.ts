@@ -17,6 +17,7 @@ import * as process from 'node:process';
 import { clientAWS, clientR2, clientS3H } from './testUtilities.ts';
 import { tryCatch, tryCatchAsync } from '../src/misc/utilities.ts';
 import type { AWSRequest } from '../src/misc/awsTypes.ts';
+import { AwsminiError } from '../src/misc/AwsminiError.ts';
 
 const bucketR2 = process.env.TEST_BUCKET_R2;
 const bucketAWS = process.env.TEST_BUCKET_AWS;
@@ -196,6 +197,13 @@ Deno.test('s3GetObjectStream', async () => {
       await stream.cancel();
     }
   }
+});
+
+Deno.test('s3GetObjectStream - not found', async () => {
+  const [err, stream] = await tryCatchAsync(s3GetObjectStream(clientR2, { bucket: bucketR2, key: 'key-not-found' }));
+  assert(err, 's3GetObjectStream should have failed');
+  assertIsError(err, AwsminiError);
+  assert(stream === null, 'stream should be null');
 });
 
 Deno.test('s3GetObjectText', async () => {
