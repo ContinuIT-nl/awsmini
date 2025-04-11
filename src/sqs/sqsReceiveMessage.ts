@@ -64,13 +64,13 @@ export type SqsMessage = {
 /**
  * SqsReceiveMessageResponse - AWS SQS type
  *
- * @typedef {Object} SqsReceiveMessageResponse 
+ * @typedef {Object} SqsReceiveMessageResponse
  * @property {SqsMessage[]} messages - The messages received from the queue.
  */
 
 export type SqsReceiveMessageInternalResponse = {
   Messages: SqsMessage[];
-}
+};
 
 export type SqsReceiveMessage = {
   messageId: string;
@@ -121,7 +121,7 @@ export const sqsReceiveMessage = async (
   });
   const response = await client.execute(awsRequest);
   const responseBody = (await response.json()) as SqsReceiveMessageInternalResponse;
-  return responseBody.Messages.map(message => ({
+  return responseBody.Messages.map((message) => ({
     messageId: message.MessageId,
     receiptHandle: message.ReceiptHandle,
     body: message.Body,

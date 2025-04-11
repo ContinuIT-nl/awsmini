@@ -7,7 +7,6 @@ import {
   sqsGetQueueAttributes,
   sqsGetQueueUrl,
   sqsListQueues,
-  sqsMarshallAttribute,
   sqsPurgeQueue,
   sqsReceiveMessage,
   sqsSendMessage,
@@ -51,9 +50,9 @@ Deno.test('sqs - send message', async () => {
     messageBody: 'Hello, world!',
     messageAttributes: { test: 'test' },
   });
-  assert(result2.MessageId, 'messageId should be present');
-  assert(result2.MD5OfMessageAttributes, 'MD5OfMessageAttributes should be present');
-  assert(result2.MD5OfMessageBody, 'MD5OfBody should be present');
+  assert(result2.messageId, 'messageId should be present');
+  assert(result2.md5OfMessageAttributes, 'md5OfMessageAttributes should be present');
+  assert(result2.md5OfMessageBody, 'md5OfMessageBody should be present');
 
   // Wait for message to be received
   await sleep(1000);

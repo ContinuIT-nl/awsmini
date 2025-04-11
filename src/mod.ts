@@ -41,9 +41,14 @@ export {
 export { sqsDeleteMessage, type SqsDeleteMessageRequest } from './sqs/sqsDeleteMessage.ts';
 export { sqsSendMessage, type SqsSendMessageRequest, type SqsSendMessageResponse } from './sqs/sqsSendMessage.ts';
 export {
+  sqsSendMessageBatch,
+  type SqsSendMessageBatchRequest,
+  type SqsSendMessageBatchResponse,
+} from './sqs/sqsSendMessageBatch.ts';
+export {
   sqsReceiveMessage,
-  type SqsReceiveMessageRequest,
   type SqsReceiveMessageInternalResponse as SqsReceiveMessageResponse,
+  type SqsReceiveMessageRequest,
 } from './sqs/sqsReceiveMessage.ts';
 
 // SNS

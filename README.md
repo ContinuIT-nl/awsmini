@@ -433,4 +433,3 @@ const response = await sqsDeleteQueue(client, {
 
 console.log('Queue deleted successfully:', response.ok);
 ```
-
