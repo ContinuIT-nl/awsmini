@@ -1,7 +1,7 @@
 import type { AWSBaseRequest, AWSRequest } from '../misc/awsTypes.ts';
 import type { Prettify } from '../misc/utilities.ts';
-import type { AWSClient } from '../mod.ts';
-import { sqsAwsRequest } from './sqs.ts';
+import type { AWSClient, MessageAttributeValue } from '../mod.ts';
+import { sqsAwsRequest, sqsUnmarshallAttribute } from './sqs.ts';
 
 /**
  * SqsReceiveMessageRequest
@@ -23,7 +23,7 @@ export type SqsReceiveMessageRequest = Prettify<
     visibilityTimeout?: number;
     waitTimeSeconds?: number;
     messageAttributeNames?: string[];
-    messageSystemAttributes?: (
+    messageSystemAttributeNames?: (
       | 'All'
       | 'SenderId'
       | 'SentTimestamp'
@@ -39,34 +39,50 @@ export type SqsReceiveMessageRequest = Prettify<
   }
 >;
 
-export type SqsMessageAttribute = {
-  BinaryListValues?: string[];
-  BinaryValue?: string;
-  DataType: string;
-  StringListValues?: string[];
-  StringValue?: string;
-};
-
+/**
+ * SqsMessage - AWS SQS type
+ *
+ * @typedef {Object} SqsMessage
+ * @property {string} MessageId - The message id.
+ * @property {string} ReceiptHandle - The receipt handle.
+ * @property {string} Body - The body of the message.
+ * @property {string} MD5OfBody - The MD5 of the body of the message.
+ * @property {string} MD5OfMessageAttributes - The MD5 of the message attributes.
+ * @property {Record<string, string>} Attributes - The attributes of the message.
+ * @property {Record<string, MessageAttributeValue>} MessageAttributes - The message attributes.
+ */
 export type SqsMessage = {
-  Attributes: Record<string, string>;
+  MessageId: string;
+  ReceiptHandle: string;
   Body: string;
   MD5OfBody: string;
   MD5OfMessageAttributes: string;
-  MessageAttributes: Record<string, SqsMessageAttribute>; // todo: do some translation here
-  MessageId: string;
-  ReceiptHandle: string;
+  Attributes: Record<string, string>;
+  MessageAttributes: Record<string, MessageAttributeValue>;
 };
 
 /**
- * SqsReceiveMessageResponse
+ * SqsReceiveMessageResponse - AWS SQS type
  *
- * @typedef {Object} SqsReceiveMessageResponse
- * @property {SqsMessage[]} Messages - The messages received from the queue.
+ * @typedef {Object} SqsReceiveMessageResponse 
+ * @property {SqsMessage[]} messages - The messages received from the queue.
  */
 
-export type SqsReceiveMessageResponse = {
+export type SqsReceiveMessageInternalResponse = {
   Messages: SqsMessage[];
+}
+
+export type SqsReceiveMessage = {
+  messageId: string;
+  receiptHandle: string;
+  body: string;
+  md5OfBody: string;
+  md5OfMessageAttributes: string;
+  attributes: Record<string, string>;
+  messageAttributes: Record<string, string | number | Uint8Array>;
 };
+
+export type SqsReceiveMessageResponse = SqsReceiveMessage[];
 
 /**
  * Receive up to 10 messages from a queue
@@ -100,11 +116,20 @@ export const sqsReceiveMessage = async (
     VisibilityTimeout: request.visibilityTimeout,
     WaitTimeSeconds: request.waitTimeSeconds,
     MessageAttributeNames: request.messageAttributeNames,
-    MessageSystemAttributes: request.messageSystemAttributes,
+    MessageSystemAttributeNames: request.messageSystemAttributeNames,
     ReceiveRequestAttemptId: request.receiveRequestAttemptId,
   });
   const response = await client.execute(awsRequest);
-  const responseBody = await response.json();
-  return responseBody as SqsReceiveMessageResponse;
-  // todo: conversion and simplification here
+  const responseBody = (await response.json()) as SqsReceiveMessageInternalResponse;
+  return responseBody.Messages.map(message => ({
+    messageId: message.MessageId,
+    receiptHandle: message.ReceiptHandle,
+    body: message.Body,
+    md5OfBody: message.MD5OfBody,
+    md5OfMessageAttributes: message.MD5OfMessageAttributes,
+    attributes: message.Attributes,
+    messageAttributes: Object.fromEntries(
+      Object.entries(message.MessageAttributes).map(([key, value]) => [key, sqsUnmarshallAttribute(value)]),
+    ),
+  }));
 };

@@ -7,6 +7,7 @@ import {
   sqsGetQueueAttributes,
   sqsGetQueueUrl,
   sqsListQueues,
+  sqsMarshallAttribute,
   sqsPurgeQueue,
   sqsReceiveMessage,
   sqsSendMessage,
@@ -32,7 +33,6 @@ Deno.test('sqs - create/list/delete queue', async () => {
   const result4 = await sqsGetQueueAttributes(clientAWS, { queueUrl: result.QueueUrl });
   assert(result4.Attributes, 'attributes should be present');
   assert(Object.keys(result4.Attributes).length > 0, 'attributes should be present');
-  console.log('attributes', result4.Attributes);
 
   await sqsPurgeQueue(clientAWS, { queueUrl: result.QueueUrl });
 
@@ -47,17 +47,13 @@ Deno.test('sqs - send message', async () => {
   assert(result.QueueUrl, 'queueUrl should be present');
 
   const result2 = await sqsSendMessage(clientAWS, {
-    QueueUrl: result.QueueUrl,
-    MessageBody: 'Hello, world!',
-    MessageAttributes: {
-      'test': {
-        DataType: 'String',
-        StringValue: 'test',
-      },
-    },
+    queueUrl: result.QueueUrl,
+    messageBody: 'Hello, world!',
+    messageAttributes: { test: 'test' },
   });
   assert(result2.MessageId, 'messageId should be present');
-  console.log('result2', result2);
+  assert(result2.MD5OfMessageAttributes, 'MD5OfMessageAttributes should be present');
+  assert(result2.MD5OfMessageBody, 'MD5OfBody should be present');
 
   // Wait for message to be received
   await sleep(1000);
@@ -65,18 +61,18 @@ Deno.test('sqs - send message', async () => {
   const result3 = await sqsReceiveMessage(clientAWS, {
     queueUrl: result.QueueUrl,
     maxNumberOfMessages: 1,
+    messageAttributeNames: ['All'],
+    messageSystemAttributeNames: ['All'],
   });
   console.log('result3', result3);
-  assert(result3.Messages.length > 0, 'messages should be present');
-  assert(result3.Messages[0].Body, 'body should be present');
-  assert(result3.Messages[0].Body === 'Hello, world!', 'body should be Hello, world!');
-  assert(result3.Messages[0].MessageId, 'messageId should be present');
-  assert(result3.Messages[0].ReceiptHandle, 'receiptHandle should be present');
+  assert(result3.length > 0, 'messages should be present');
+  assert(result3[0].body, 'body should be present');
+  assert(result3[0].body === 'Hello, world!', 'body should be Hello, world!');
+  assert(result3[0].messageId, 'messageId should be present');
+  assert(result3[0].receiptHandle, 'receiptHandle should be present');
 
-  await sqsDeleteMessage(clientAWS, {
-    queueUrl: result.QueueUrl,
-    receiptHandle: result3.Messages[0].ReceiptHandle,
-  });
+  // Delete message
+  await sqsDeleteMessage(clientAWS, { queueUrl: result.QueueUrl, receiptHandle: result3[0].receiptHandle });
 
   // Delete queue
   await sqsDeleteQueue(clientAWS, { queueUrl: result.QueueUrl });
