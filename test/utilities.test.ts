@@ -1,5 +1,5 @@
 import { assert, assertEquals, assertIsError, assertNotStrictEquals } from '@std/assert';
-import { capitalize, tryCatch, tryCatchAsync } from '../src/misc/utilities.ts';
+import { capitalize, encodeRfc3986, tryCatch, tryCatchAsync } from '../src/misc/utilities.ts';
 import { sleep } from './testUtilities.ts';
 
 Deno.test('tryCatch', () => {
@@ -79,4 +79,14 @@ Deno.test('capitalize', () => {
   });
 
   assertEquals(capitalize(undefined), undefined);
+});
+
+Deno.test('encodeRfc3986', () => {
+  assertEquals(encodeRfc3986('test'), 'test');
+  assertEquals(encodeRfc3986('test!'), 'test%21');
+  assertEquals(encodeRfc3986('test@'), 'test%40');
+  assertEquals(encodeRfc3986('test#'), 'test%23');
+  assertEquals(encodeRfc3986('test$'), 'test%24');
+  assertEquals(encodeRfc3986('test&'), 'test%26');
+  assertEquals(encodeRfc3986('test '), 'test%20');
 });

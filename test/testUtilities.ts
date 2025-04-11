@@ -1,4 +1,3 @@
-// deno-coverage-ignore-file
 import { AWSClient } from '../src/mod.ts';
 import * as process from 'node:process';
 

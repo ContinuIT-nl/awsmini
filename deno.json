@@ -1,12 +1,20 @@
 {
   "name": "@continuit/awsmini",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Access AWS (compatible) services fast in with simple tree shakeable code",
   "repository": "https://github.com/ContinuIT-nl/awsmini",
   "license": "MIT",
   "author": "ContinuIT BV, The Netherlands",
   "tasks": {
-    "test": "deno test -RWNE --env=.env --coverage=data/coverage.lcov --clean && deno coverage data/coverage.lcov"
+    "test": "deno test -RWNE --env=.env --coverage=data/coverage.lcov --clean && deno task coverage && deno task coverage-detailed",
+    "test-client": "deno test -RWNE --env=.env ./test/client.test.ts",
+    "test-utilities": "deno test -RWNE --env=.env ./test/utilities.test.ts",
+    "test-s3": "deno test -RWNE --env=.env ./test/s3.test.ts",
+    "test-sqs": "deno test -RWNE --env=.env ./test/sqs.test.ts",
+    "test-sns": "deno test -RWNE --env=.env ./test/sns.test.ts",
+    "coverage": "deno coverage data/coverage.lcov --exclude=\"test\"",
+    "coverage-detailed": "deno coverage data/coverage.lcov --exclude=\"test\" --detailed > data/coverage-detailed.txt",
+    "all": "deno lint && deno fmt && deno check ./src/mod.ts && deno task test"
   },
   "imports": {
     "@continuit/xmlscanner": "jsr:@continuit/xmlscanner@^1.0.0",
