@@ -26,6 +26,7 @@ export { buildMultipartUploadBody, S3MultipartUpload, S3MultipartUploadStream } 
 
 // SQS
 
+export { type MessageAttributeValue, sqsMarshallAttribute } from './sqs/sqs.ts';
 export { sqsCreateQueue, type SqsCreateQueueRequest, type SqsCreateQueueResponse } from './sqs/sqsCreateQueue.ts';
 export { sqsDeleteQueue, type SqsDeleteQueueRequest } from './sqs/sqsDeleteQueue.ts';
 export { sqsPurgeQueue, type SqsPurgeQueueRequest } from './sqs/sqsPurgeQueue.ts';
@@ -38,7 +39,13 @@ export {
 } from './sqs/sqsGetQueueAttributes.ts';
 
 export { sqsDeleteMessage, type SqsDeleteMessageRequest } from './sqs/sqsDeleteMessage.ts';
+export { sqsDeleteMessageBatch, type SqsDeleteMessageBatchRequest } from './sqs/sqsDeleteMessageBatch.ts';
 export { sqsSendMessage, type SqsSendMessageRequest, type SqsSendMessageResponse } from './sqs/sqsSendMessage.ts';
+export {
+  sqsSendMessageBatch,
+  type SqsSendMessageBatchRequest,
+  type SqsSendMessageBatchResponse,
+} from './sqs/sqsSendMessageBatch.ts';
 export {
   sqsReceiveMessage,
   type SqsReceiveMessageRequest,

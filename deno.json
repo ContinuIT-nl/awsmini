@@ -1,6 +1,6 @@
 {
   "name": "@continuit/awsmini",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Access AWS (compatible) services fast in with simple tree shakeable code",
   "repository": "https://github.com/ContinuIT-nl/awsmini",
   "license": "MIT",
@@ -18,7 +18,8 @@
   },
   "imports": {
     "@continuit/xmlscanner": "jsr:@continuit/xmlscanner@^1.0.0",
-    "@std/assert": "jsr:@std/assert@1.0.12"
+    "@std/assert": "jsr:@std/assert@1.0.12",
+    "@std/encoding": "jsr:@std/encoding@^1.0.9"
   },
   "exports": "./src/mod.ts",
   "publish": {

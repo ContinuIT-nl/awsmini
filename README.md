@@ -277,3 +277,207 @@ const response = await lambdaInvoke(client, {
 });
 console.log(response.response, response.statusCode, ... );
 ```
+
+## SQS
+
+### sqs - sqsSendMessage
+
+```ts
+import { sqsSendMessage } from './src/sqs/sqsSendMessage.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Send a message to the queue
+const response = await sqsSendMessage(client, {
+  queueUrl: 'YOUR_QUEUE_URL',
+  messageBody: 'Hello SQS!',
+});
+
+console.log('Message sent with ID:', response.messageId);
+```
+
+### sqs - sqsSendMessageBatch
+
+```ts
+import { sqsSendMessageBatch } from './src/sqs/sqsSendMessageBatch.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Send multiple messages to the queue
+const response = await sqsSendMessageBatch(client, {
+  queueUrl: 'YOUR_QUEUE_URL',
+  entries: [
+    { id: 'msg1', messageBody: 'First batch message' },
+    { id: 'msg2', messageBody: 'Second batch message' },
+  ],
+});
+
+console.log('Successfully sent:', response.Successful?.map((entry) => entry.Id));
+console.log('Failed:', response.Failed?.map((entry) => entry.Id));
+```
+
+### sqs - sqsDeleteMessageBatch
+
+```ts
+import { sqsDeleteMessageBatch } from './src/sqs/sqsDeleteMessageBatch.ts';
+// Assuming you have received messages and have their receipt handles
+// from sqsReceiveMessage, e.g., receivedMessages = result.messages
+
+const client = obtainClient(); // See Setup AWS client
+
+// Delete multiple messages after processing
+const deleteEntries = receivedMessages.map((msg, index) => ({
+  id: `del${index}`, // Unique ID for the delete request entry
+  receiptHandle: msg.receiptHandle,
+}));
+
+if (deleteEntries.length > 0) {
+  const response = await sqsDeleteMessageBatch(client, {
+    queueUrl: 'YOUR_QUEUE_URL',
+    entries: deleteEntries,
+  });
+
+  console.log('Successfully deleted:', response.successful?.map((entry) => entry.id));
+  console.log('Failed deletions:', response.failed?.map((entry) => entry.id));
+} else {
+  console.log('No messages to delete.');
+}
+```
+
+### sqs - sqsReceiveMessage
+
+```ts
+import { sqsReceiveMessage } from './src/sqs/sqsReceiveMessage.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Receive messages from the queue
+const result = await sqsReceiveMessage(client, {
+  queueUrl: 'YOUR_QUEUE_URL',
+  maxNumberOfMessages: 10,
+  waitTimeSeconds: 20,
+});
+
+if (result.messages) {
+  console.log('Received messages:', result.messages.length);
+  result.messages.forEach((message) => {
+    console.log('Message Body:', message.body);
+    console.log('Receipt Handle:', message.receiptHandle);
+    // Remember to delete the message after processing
+  });
+} else {
+  console.log('No messages received.');
+}
+```
+
+### sqs - sqsDeleteMessage
+
+```ts
+import { sqsDeleteMessage } from './src/sqs/sqsDeleteMessage.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Delete a message after processing (use receipt handle from sqsReceiveMessage)
+const response = await sqsDeleteMessage(client, {
+  queueUrl: 'YOUR_QUEUE_URL',
+  receiptHandle: 'MESSAGE_RECEIPT_HANDLE',
+});
+
+console.log('Message deleted successfully:', response.ok);
+```
+
+### sqs - sqsPurgeQueue
+
+```ts
+import { sqsPurgeQueue } from './src/sqs/sqsPurgeQueue.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Purge all messages from a queue
+const response = await sqsPurgeQueue(client, {
+  queueUrl: 'YOUR_QUEUE_URL',
+});
+
+console.log('Queue purge initiated successfully:', response.ok);
+```
+
+### sqs - sqsGetQueueAttributes
+
+```ts
+import { sqsGetQueueAttributes } from './src/sqs/sqsGetQueueAttributes.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Get attributes of a queue
+const result = await sqsGetQueueAttributes(client, {
+  queueUrl: 'YOUR_QUEUE_URL',
+  attributeNames: ['All'], // Or specify ['ApproximateNumberOfMessages', 'CreatedTimestamp'] etc.
+});
+
+console.log('Queue Attributes:', result.attributes);
+```
+
+### sqs - sqsListQueues
+
+```ts
+import { sqsListQueues } from './src/sqs/sqsListQueues.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// List queues (optionally with a prefix)
+const result = await sqsListQueues(client, {
+  // queueNamePrefix: 'my-prefix-',
+});
+
+console.log('Queue URLs:', result.queueUrls);
+```
+
+### sqs - sqsGetQueueUrl
+
+```ts
+import { sqsGetQueueUrl } from './src/sqs/sqsGetQueueUrl.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Get the URL for a queue by its name
+const result = await sqsGetQueueUrl(client, {
+  queueName: 'my-queue-name',
+});
+
+console.log('Queue URL:', result.queueUrl);
+```
+
+### sqs - sqsCreateQueue
+
+```ts
+import { sqsCreateQueue } from './src/sqs/sqsCreateQueue.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Create a new queue
+const result = await sqsCreateQueue(client, {
+  queueName: 'my-new-queue',
+  attributes: { // Optional attributes
+    VisibilityTimeout: '60', // seconds
+    // DelaySeconds: '0',
+    // MessageRetentionPeriod: '345600', // seconds (4 days)
+  },
+});
+
+console.log('Queue created with URL:', result.queueUrl);
+```
+
+### sqs - sqsDeleteQueue
+
+```ts
+import { sqsDeleteQueue } from './src/sqs/sqsDeleteQueue.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Delete a queue
+const response = await sqsDeleteQueue(client, {
+  queueUrl: 'URL_OF_QUEUE_TO_DELETE',
+});
+
+console.log('Queue deleted successfully:', response.ok);
+```
