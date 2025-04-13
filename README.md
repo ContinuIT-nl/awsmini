@@ -296,6 +296,54 @@ const response = await sqsSendMessage(client, {
 console.log('Message sent with ID:', response.messageId);
 ```
 
+### sqs - sqsSendMessageBatch
+
+```ts
+import { sqsSendMessageBatch } from './src/sqs/sqsSendMessageBatch.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Send multiple messages to the queue
+const response = await sqsSendMessageBatch(client, {
+  queueUrl: 'YOUR_QUEUE_URL',
+  entries: [
+    { id: 'msg1', messageBody: 'First batch message' },
+    { id: 'msg2', messageBody: 'Second batch message' },
+  ],
+});
+
+console.log('Successfully sent:', response.Successful?.map(entry => entry.Id));
+console.log('Failed:', response.Failed?.map(entry => entry.Id));
+```
+
+### sqs - sqsDeleteMessageBatch
+
+```ts
+import { sqsDeleteMessageBatch } from './src/sqs/sqsDeleteMessageBatch.ts';
+// Assuming you have received messages and have their receipt handles
+// from sqsReceiveMessage, e.g., receivedMessages = result.messages
+
+const client = obtainClient(); // See Setup AWS client
+
+// Delete multiple messages after processing
+const deleteEntries = receivedMessages.map((msg, index) => ({
+  id: `del${index}`, // Unique ID for the delete request entry
+  receiptHandle: msg.receiptHandle,
+}));
+
+if (deleteEntries.length > 0) {
+    const response = await sqsDeleteMessageBatch(client, {
+        queueUrl: 'YOUR_QUEUE_URL',
+        entries: deleteEntries,
+    });
+
+    console.log('Successfully deleted:', response.successful?.map(entry => entry.id));
+    console.log('Failed deletions:', response.failed?.map(entry => entry.id));
+} else {
+    console.log("No messages to delete.");
+}
+```
+
 ### sqs - sqsReceiveMessage
 
 ```ts
@@ -433,3 +481,4 @@ const response = await sqsDeleteQueue(client, {
 
 console.log('Queue deleted successfully:', response.ok);
 ```
+
