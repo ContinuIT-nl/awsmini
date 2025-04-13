@@ -312,8 +312,8 @@ const response = await sqsSendMessageBatch(client, {
   ],
 });
 
-console.log('Successfully sent:', response.Successful?.map(entry => entry.Id));
-console.log('Failed:', response.Failed?.map(entry => entry.Id));
+console.log('Successfully sent:', response.Successful?.map((entry) => entry.Id));
+console.log('Failed:', response.Failed?.map((entry) => entry.Id));
 ```
 
 ### sqs - sqsDeleteMessageBatch
@@ -332,15 +332,15 @@ const deleteEntries = receivedMessages.map((msg, index) => ({
 }));
 
 if (deleteEntries.length > 0) {
-    const response = await sqsDeleteMessageBatch(client, {
-        queueUrl: 'YOUR_QUEUE_URL',
-        entries: deleteEntries,
-    });
+  const response = await sqsDeleteMessageBatch(client, {
+    queueUrl: 'YOUR_QUEUE_URL',
+    entries: deleteEntries,
+  });
 
-    console.log('Successfully deleted:', response.successful?.map(entry => entry.id));
-    console.log('Failed deletions:', response.failed?.map(entry => entry.id));
+  console.log('Successfully deleted:', response.successful?.map((entry) => entry.id));
+  console.log('Failed deletions:', response.failed?.map((entry) => entry.id));
 } else {
-    console.log("No messages to delete.");
+  console.log('No messages to delete.');
 }
 ```
 
@@ -481,4 +481,3 @@ const response = await sqsDeleteQueue(client, {
 
 console.log('Queue deleted successfully:', response.ok);
 ```
-
