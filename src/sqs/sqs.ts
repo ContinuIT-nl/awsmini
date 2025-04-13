@@ -1,4 +1,5 @@
 import type { AWSBaseRequest, AWSRequest } from '../misc/awsTypes.ts';
+import { decodeBase64, encodeBase64 } from '@std/encoding/base64';
 
 /**
  * sqsAwsRequest
@@ -21,8 +22,6 @@ export const sqsAwsRequest = (request: AWSBaseRequest, target: string, body: unk
   checkResponse: true,
   signal: request.signal,
 });
-
-// todo: message types here,
 
 /**
  * MessageAttributeValue - AWS SQS type
@@ -48,7 +47,7 @@ export type MessageAttributeValue = {
  */
 export const sqsMarshallAttribute = (value: string | number | boolean | Uint8Array): MessageAttributeValue =>
   value instanceof Uint8Array
-    ? { DataType: 'Binary', BinaryValue: value.toString() } // todo: real implementation
+    ? { DataType: 'Binary', BinaryValue: encodeBase64(value) }
     : { DataType: typeof value === 'number' ? 'Number' : 'String', StringValue: value.toString() };
 
 /**
@@ -58,13 +57,13 @@ export const sqsMarshallAttribute = (value: string | number | boolean | Uint8Arr
  */
 export const sqsUnmarshallAttribute = (attribute: MessageAttributeValue): string | number | Uint8Array =>
   attribute.DataType === 'Binary'
-    ? new Uint8Array(0)
+    ? decodeBase64(attribute.BinaryValue ?? '')
     : attribute.DataType === 'Number'
     ? Number(attribute.StringValue)
     : attribute.StringValue ?? '';
 
 /**
- * SqsMessageToSend
+ * SqsMessageToSend - AWS SQS type
  *
  * @typedef {Object} SqsMessageToSend
  * @property {string} MessageBody - The body of the message to send. 1 byte to 256 KB.
@@ -105,5 +104,3 @@ export type SqsSendMessageSent = {
   MD5OfMessageSystemAttributes: string;
   SequenceNumber: string;
 };
-
-// todo: DeleteMessageBatch

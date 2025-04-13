@@ -3,7 +3,7 @@ import { bufferToHex, emptyHashSha256, encodeRfc3986, hashSha256, hmacSha256 } f
 
 const encoder = new TextEncoder();
 
-const signingKeyCache = new Map<string, ArrayBuffer>(); // todo: use a LRU cache
+const signingKeyCache = new Map<string, ArrayBuffer>();
 
 const getSigningKey = async (secretAccessKey: string, date: string, region: string, service: string) => {
   const cacheKey = `${secretAccessKey}-${date}-${region}-${service}`;

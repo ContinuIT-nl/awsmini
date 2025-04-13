@@ -19,8 +19,6 @@ export type SqsDeleteMessageRequest = Prettify<AWSBaseRequest & { queueUrl: stri
  * @param request - The request describing the message to delete
  * @returns The response from the AWS service.
  *
- * You must wait 60 seconds after deleting a queue before you can create another with the same name.
- *
  * @example
  * ```ts
  * await sqsDeleteMessage(client, {

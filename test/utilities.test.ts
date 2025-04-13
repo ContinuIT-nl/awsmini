@@ -58,7 +58,7 @@ Deno.test('tryCatchAsync - direct exception', async () => {
   assert(result === null, 'result should be null');
 });
 
-// todo: test what happens if an excweption is thrown directly in the promise creation instead of a setTimeout
+// todo: test what happens if an exception is thrown directly in the promise creation instead of a setTimeout
 
 Deno.test('sleep - 10ms', async () => {
   const start = Date.now();

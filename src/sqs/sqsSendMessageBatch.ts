@@ -105,5 +105,5 @@ export const sqsSendMessageBatch = async (
   });
   const response = await client.execute(awsRequest);
   const json = await response.json();
-  return json as SqsSendMessageBatchResponse;
+  return json as SqsSendMessageBatchResponse; // todo: translate
 };
