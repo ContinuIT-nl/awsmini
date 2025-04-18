@@ -44,9 +44,11 @@ export { sqsSendMessage, type SqsSendMessageRequest, type SqsSendMessageResponse
 export {
   sqsSendMessageBatch,
   type SqsSendMessageBatchRequest,
+  type SqsSendMessageBatchRequestEntry,
   type SqsSendMessageBatchResponse,
 } from './sqs/sqsSendMessageBatch.ts';
 export {
+  type SqsReceiveMessage,
   sqsReceiveMessage,
   type SqsReceiveMessageRequest,
   type SqsReceiveMessageResponse,

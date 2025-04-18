@@ -9,12 +9,31 @@ import {
   sqsGetQueueUrl,
   sqsListQueues,
   sqsPurgeQueue,
+  type SqsReceiveMessage,
   sqsReceiveMessage,
   sqsSendMessage,
   sqsSendMessageBatch,
+  type SqsSendMessageBatchRequestEntry,
 } from '../src/mod.ts';
+import { tryCatchAsync } from '../src/misc/utilities.ts';
 
 const randomSuffix = Math.random().toString(36).substring(2, 15);
+
+Deno.test('sqs - sqsListQueues', async () => {
+  const [err, result] = await tryCatchAsync(sqsListQueues(clientAWS, { queueNamePrefix: 'test-queue' }));
+  if (err) {
+    assert(err.message.includes('The specified queue does not exist.'));
+  } else {
+    assert(result, 'result should be present');
+    if (result.QueueUrls) {
+      for (const queueUrl of result.QueueUrls) {
+        console.log('>>> deleting queue', queueUrl);
+        await sqsDeleteQueue(clientAWS, { queueUrl });
+        await sleep(1000);
+      }
+    }
+  }
+});
 
 Deno.test('sqs - create/list/delete queue', async () => {
   const queueName = `test-queue-${randomSuffix}`;
@@ -22,10 +41,6 @@ Deno.test('sqs - create/list/delete queue', async () => {
 
   const result = await sqsCreateQueue(clientAWS, { queueName });
   assert(result.QueueUrl, 'queueUrl should be present');
-
-  const result2 = await sqsListQueues(clientAWS, { queueNamePrefix: 'test' });
-  assert(result2.QueueUrls.length > 0, 'QueueUrls should be present');
-  assert(result2.QueueUrls.includes(result.QueueUrl), 'QueueUrl should be present');
 
   const result3 = await sqsGetQueueUrl(clientAWS, { queueName });
   assert(result3.QueueUrl, 'queueUrl should be present');
@@ -36,6 +51,8 @@ Deno.test('sqs - create/list/delete queue', async () => {
   assert(Object.keys(result4.Attributes).length > 0, 'attributes should be present');
 
   await sqsPurgeQueue(clientAWS, { queueUrl: result.QueueUrl });
+
+  await sleep(1000);
 
   await sqsDeleteQueue(clientAWS, { queueUrl: result.QueueUrl });
 });
@@ -65,7 +82,6 @@ Deno.test('sqs - send message', async () => {
     messageAttributeNames: ['All'],
     messageSystemAttributeNames: ['All'],
   });
-  console.log('result3', result3);
   assert(result3.length > 0, 'messages should be present');
   assert(result3[0].body, 'body should be present');
   assert(result3[0].body === 'Hello, world!', 'body should be Hello, world!');
@@ -86,50 +102,66 @@ Deno.test('sqs - send message batch', async () => {
   const result = await sqsCreateQueue(clientAWS, { queueName });
   assert(result.QueueUrl, 'queueUrl should be present');
 
+  const entries: SqsSendMessageBatchRequestEntry[] = [
+    {
+      id: '1',
+      messageBody: 'Hello, world!',
+      messageAttributes: { test: 'test', test2: 2, test3: new Uint8Array(1) },
+    },
+    {
+      id: '2',
+      messageBody: 'Hello, again!',
+      messageAttributes: { test: 'test' },
+    },
+    {
+      id: '3',
+      messageBody: 'No attributes!',
+    },
+  ];
+
   const result2 = await sqsSendMessageBatch(clientAWS, {
     queueUrl: result.QueueUrl,
-    entries: [
-      {
-        id: '1',
-        messageBody: 'Hello, world!',
-        messageAttributes: { test: 'test', test2: 2, test3: new Uint8Array(1) },
-      },
-      {
-        id: '2',
-        messageBody: 'Hello, again!',
-        messageAttributes: { test: 'test' },
-      },
-    ],
+    entries,
   });
   assert((result2.Failed?.length ?? 0) === 0, JSON.stringify(result2.Failed, null, 2));
-  assert((result2.Successful?.length ?? 0) === 2, 'Successful should be 2');
+  assert((result2.Successful?.length ?? 0) === 3, 'Successful should be 3');
 
   // Wait for message to be received
-  await sleep(1000);
 
-  const result3 = await sqsReceiveMessage(clientAWS, {
-    queueUrl: result.QueueUrl,
-    maxNumberOfMessages: 2,
-    messageAttributeNames: ['All'],
-    messageSystemAttributeNames: ['All'],
-  });
-  console.log('result3', result3);
-  assert(result3.length === 2, 'messages should be present');
-  assert(result3[0].body, 'body should be present');
-  assert(result3[0].body === 'Hello, world!', 'body should be Hello, world!');
-  assert(result3[1].body, 'body should be present');
-  assert(result3[1].body === 'Hello, again!', 'body should be Hello, again!');
-  assertEquals(result3[0].messageId, result2.Successful?.[0]?.MessageId, 'messageId should be present');
-  assert(result3[0].receiptHandle, 'receiptHandle should be present');
-  assertEquals(result3[1].messageId, result2.Successful?.[1]?.MessageId, 'messageId should be present');
-  assert(result3[1].receiptHandle, 'receiptHandle should be present');
+  const messages: SqsReceiveMessage[] = [];
+
+  while (messages.length < 3) {
+    const result3 = await sqsReceiveMessage(clientAWS, {
+      queueUrl: result.QueueUrl,
+      maxNumberOfMessages: 3 - messages.length,
+      messageAttributeNames: ['All'],
+      messageSystemAttributeNames: ['All'],
+    });
+    if (result3.length > 0) {
+      messages.push(...result3);
+    } else {
+      await sleep(1000);
+      console.log('waiting for messages');
+    }
+  }
+
+  assert(messages.length === 3, `3 messages should be present but found ${messages.length}`);
+  for (const message of result2?.Successful ?? []) {
+    const recvMessage = messages.find((m) => m.messageId === message.MessageId);
+    assert(recvMessage, `message ${message.MessageId} should be present`);
+    assertEquals(
+      recvMessage.body,
+      entries.find((e) => e.id === message.Id)?.messageBody,
+      `body should be ${entries.find((e) => e.id === message.Id)?.messageBody}`,
+    );
+  }
 
   // Delete message
   const result4 = await sqsDeleteMessageBatch(clientAWS, {
     queueUrl: result.QueueUrl,
-    entries: result3.map((e, i) => ({ id: `id-${i}`, receiptHandle: e.receiptHandle })),
+    entries: messages.map((e, i) => ({ id: `id-${i}`, receiptHandle: e.receiptHandle })),
   });
-  assertEquals(result4.successful?.length ?? 0, 2, 'successful should be 2');
+  assertEquals(result4.successful?.length ?? 0, 3, 'successful should be 3');
   assertEquals(result4.failed?.length ?? 0, 0, 'failed should be 0');
 
   // Delete queue

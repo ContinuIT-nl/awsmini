@@ -128,8 +128,10 @@ export const sqsReceiveMessage = async (
     md5OfBody: message.MD5OfBody,
     md5OfMessageAttributes: message.MD5OfMessageAttributes,
     attributes: message.Attributes,
-    messageAttributes: Object.fromEntries(
-      Object.entries(message.MessageAttributes).map(([key, value]) => [key, sqsUnmarshallAttribute(value)]),
-    ),
+    messageAttributes: message.MessageAttributes
+      ? Object.fromEntries(
+        Object.entries(message.MessageAttributes).map(([key, value]) => [key, sqsUnmarshallAttribute(value)]),
+      )
+      : {},
   }));
 };
