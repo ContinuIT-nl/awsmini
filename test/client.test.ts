@@ -1,7 +1,8 @@
-import { tryCatch } from '../src/misc/utilities.ts';
+import { tryCatch, tryCatchAsync } from '../src/misc/utilities.ts';
 import { AWSClient, clientConfigEnv } from '../src/mod.ts';
 import { assert, assertIsError, assertNotStrictEquals } from '@std/assert';
 import * as process from 'node:process';
+import { s3GetObject } from '../src/s3/s3GetObject.ts';
 Deno.test('awsClient missing region', () => {
   const [error, _client] = tryCatch(() =>
     new AWSClient({
@@ -197,4 +198,42 @@ Deno.test('config - env', () => {
       delete process.env[key];
     }
   }
+});
+
+Deno.test('awsClient - unknown error', async () => {
+  let errorText = '';
+  const client = new AWSClient({
+    accessKeyId: 'test-access-key',
+    secretAccessKey: 'test-secret-key',
+    region: 'us-east-1',
+    endpoint: 'https://test-endpoint.com',
+    fetch: (): Promise<Response> => {
+      return new Promise((resolve) => {
+        resolve(new Response(errorText, { status: 500 }));
+      });
+    },
+  });
+  errorText = 'unknown error';
+  const [error] = await tryCatchAsync(s3GetObject(client, { bucket: 'bucket', key: 'key' }));
+  assert(!!error, 'An error should have been thrown');
+  assertIsError(error, Error);
+  assert(error.message.includes('unknown error'));
+
+  errorText = '{unknown error';
+  const [error2] = await tryCatchAsync(s3GetObject(client, { bucket: 'bucket', key: 'key' }));
+  assert(!!error2, 'An error should have been thrown');
+  assertIsError(error2, Error);
+  assert(error2.message.includes('unknown error'));
+
+  errorText = '{"error": "unknown error"}';
+  const [error3] = await tryCatchAsync(s3GetObject(client, { bucket: 'bucket', key: 'key' }));
+  assert(!!error3, 'An error should have been thrown');
+  assertIsError(error3, Error);
+  assert(error3.message.includes('unknown error'));
+
+  errorText = '<SomeError';
+  const [error4] = await tryCatchAsync(s3GetObject(client, { bucket: 'bucket', key: 'key' }));
+  assert(!!error4, 'An error should have been thrown');
+  assertIsError(error4, Error);
+  assert(error4.message.includes('unknown error'));
 });
