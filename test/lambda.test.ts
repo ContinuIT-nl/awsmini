@@ -38,14 +38,30 @@ Deno.test('lambda - invoke - error', async () => {
   assert(!result, 'result should be undefined');
 });
 
-Deno.test('lambda - list functions', async () => {
+Deno.test('lambda - invoke - error2', async () => {
+  const [error, result] = await tryCatchAsync(
+    lambdaInvoke(clientAWS, { functionName: lambdaName, payload: {}, clientContext: { test: 'x'.repeat(3584) } }),
+  );
+  assertIsError(error, AwsminiError, 'Client context is too long');
+  assert(!result, 'result should be undefined');
+});
+
+Deno.test('lambda - lambdaListFunctions', async () => {
   const result = await lambdaListFunctions(clientAWS, {});
   const functionNames = result.Functions.map((f) => f.FunctionName);
   assertGreater(functionNames.length, 0);
   assert(functionNames.includes(lambdaName));
 });
 
-Deno.test('lambda - list functions', async () => {
+Deno.test('lambda - lambdaListFunctions - maxItems', async () => {
+  const result = await lambdaListFunctions(clientAWS, {
+    maxItems: 1,
+  });
+  const functionNames = result.Functions.map((f) => f.FunctionName);
+  assertEquals(functionNames.length, 1);
+});
+
+Deno.test('lambda - lambdaListFunctionsAll', async () => {
   const funcs: string[] = [];
   for await (const func of lambdaListFunctionsAll(clientAWS, {})) {
     funcs.push(func.FunctionName);
