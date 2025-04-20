@@ -106,7 +106,11 @@ Deno.test('sqs - send message batch', async () => {
     {
       id: '1',
       messageBody: 'Hello, world!',
-      messageAttributes: { test: 'test', test2: 2, test3: new Uint8Array(1) },
+      messageAttributes: { 
+        test: 'test', 
+        test2: 2, 
+        test3: new Uint8Array(1) 
+      },
     },
     {
       id: '2',
