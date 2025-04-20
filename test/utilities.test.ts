@@ -78,7 +78,7 @@ Deno.test('capitalize', () => {
     def: '0',
   });
 
-  assertEquals(capitalize(undefined), undefined);
+  assertEquals(capitalize(undefined), {});
 });
 
 Deno.test('encodeRfc3986', () => {

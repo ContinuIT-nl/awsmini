@@ -156,7 +156,7 @@ export async function lambdaListFunctions(
       Marker: request.marker,
       MasterRegion: request.masterRegion,
       MaxItems: request.maxItems ? request.maxItems.toString() : undefined,
-    }) ?? {},
+    }),
     headers: {},
     checkResponse: request.checkResponse ?? true,
     signal: request.signal,
