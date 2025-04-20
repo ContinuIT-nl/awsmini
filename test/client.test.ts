@@ -207,6 +207,7 @@ Deno.test('awsClient - unknown error', async () => {
     secretAccessKey: 'test-secret-key',
     region: 'us-east-1',
     endpoint: 'https://test-endpoint.com',
+    sessionToken: 'test-session-token',
     fetch: (): Promise<Response> => {
       return new Promise((resolve) => {
         resolve(new Response(errorText, { status: 500 }));

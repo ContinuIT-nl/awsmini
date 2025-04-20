@@ -130,7 +130,9 @@ export const sqsReceiveMessage = async (
     attributes: message.Attributes,
     messageAttributes: message.MessageAttributes
       ? Object.fromEntries(
-        Object.entries(message.MessageAttributes).map(([key, value]) => [key, sqsUnmarshallAttribute(value)]),
+        Object.entries(message.MessageAttributes).map(
+          ([key, value]) => [key, sqsUnmarshallAttribute(value)],
+        ),
       )
       : {},
   }));
