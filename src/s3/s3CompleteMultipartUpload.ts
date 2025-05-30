@@ -49,7 +49,7 @@ export async function s3CompleteMultipartUpload(
   client: AWSClient,
   request: S3CompleteMultipartUploadRequest,
 ): Promise<Response> {
-  const req = S3KeyOptions(request, 'POST');
+  const req = S3KeyOptions(request, 'POST', client.options?.s3PathStyleUrl ?? false);
   req.queryParameters['uploadId'] = request.uploadId;
   req.body = request.body;
   return cancelBody(await client.execute(req));

@@ -33,7 +33,7 @@ export type S3ListObjectsRequest = Prettify<S3BucketRequest & { prefix?: string;
  * ```
  */
 export async function s3ListObjects(client: AWSClient, request: S3ListObjectsRequest): Promise<ListObjectResult> {
-  const req = S3BaseOptions(request, 'GET');
+  const req = S3BaseOptions(request, 'GET', client.options?.s3PathStyleUrl ?? false);
   if (request.prefix) req.queryParameters['prefix'] = request.prefix; // todo: URI encoding
   if (request.delimiter) req.queryParameters['delimiter'] = request.delimiter; // todo: URI encoding
   const response = await client.execute(req);

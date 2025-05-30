@@ -1,6 +1,6 @@
 import { signRequest } from './awsSignature.ts';
 import type { AWSConfig, AWSFullRequest, AWSRequest } from '../misc/awsTypes.ts';
-import type { ClientConfig } from './clientConfig.ts';
+import type { ClientConfig, ClientOptions } from './clientConfig.ts';
 import { AwsminiError } from '../misc/AwsminiError.ts';
 import { encodeRfc3986, tryCatch } from '../misc/utilities.ts';
 
@@ -31,8 +31,9 @@ const defaulthttps = (endpoint: string) => endpoint.includes('://') ? endpoint :
  * Describe other options here
  */
 export class AWSClient {
-  private config: AWSConfig;
-  private fetch: typeof fetch;
+  public readonly config: AWSConfig;
+  public readonly options: ClientOptions;
+  public readonly fetch: typeof fetch;
 
   /**
    * Constructor
@@ -41,7 +42,7 @@ export class AWSClient {
    *
    * @throws {AwsminiError} If the region, access key ID or secret access key is not set.
    */
-  constructor(clientConfig: ClientConfig) {
+  constructor(clientConfig: ClientConfig, options: ClientOptions = {}) {
     // todo: Also SSO, IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
     // Sanity checks. Collect errors in an array and throw all findings in one Error.
     const errors: string[] = [];
@@ -64,6 +65,7 @@ export class AWSClient {
       // todo: maxRetries etc
     };
     this.config = result;
+    this.options = options ?? {};
     this.fetch = clientConfig.fetch ?? fetch;
   }
 

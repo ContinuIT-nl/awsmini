@@ -1,5 +1,6 @@
 import type { AWSClient } from '../client/AWSClient.ts';
 import type { Prettify } from '../misc/utilities.ts';
+import { cancelBody } from '../misc/utilities.ts';
 import { S3KeyOptions, type S3KeyRequest } from './s3.ts';
 
 /**
@@ -35,7 +36,7 @@ export async function s3AbortMultipartUpload(
   client: AWSClient,
   request: S3AbortMultipartUploadRequest,
 ): Promise<Response> {
-  const req = S3KeyOptions(request, 'DELETE');
+  const req = S3KeyOptions(request, 'DELETE', client.options.s3PathStyleUrl);
   req.queryParameters['uploadId'] = request.uploadId;
-  return await client.execute(req);
+  return cancelBody(await client.execute(req));
 }

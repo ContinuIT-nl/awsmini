@@ -35,7 +35,7 @@ export type S3HeadObjectRequest = Prettify<S3KeyRequest & AWSIfOptions>;
  * ```
  */
 export async function s3HeadObject(client: AWSClient, request: S3HeadObjectRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'HEAD');
+  const req = S3KeyOptions(request, 'HEAD', client.options?.s3PathStyleUrl ?? false);
   awsAddIfOptions(req, request);
   return cancelBody(await client.execute(req));
 }

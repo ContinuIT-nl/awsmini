@@ -36,9 +36,9 @@ export type S3UploadPartRequest = Prettify<
  * @note Use S3MultipartUploadStream or S3MultipartUpload for a higher level API to do multipart uploads.
  */
 export async function s3UploadPart(client: AWSClient, request: S3UploadPartRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'PUT');
-  req.queryParameters['uploadId'] = request.uploadId;
+  const req = S3KeyOptions(request, 'PUT', client.options?.s3PathStyleUrl ?? false);
   req.queryParameters['partNumber'] = request.partNumber.toString();
+  req.queryParameters['uploadId'] = request.uploadId;
   req.body = request.body;
   // req.headers['x-amz-content-sha256'] = 'UNSIGNED-PAYLOAD';
   return cancelBody(await client.execute(req));

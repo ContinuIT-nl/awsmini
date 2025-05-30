@@ -17,3 +17,12 @@ export type ClientConfig = {
   endpoint?: string;
   fetch?: typeof fetch;
 };
+
+/**
+ * Additional options for the client.
+ *
+ * @property {boolean} [s3PathStyleUrl] - if true, use path style URL for S3 requests instead of DNS subdomain style URLs.
+ */
+export type ClientOptions = {
+  s3PathStyleUrl?: boolean;
+};

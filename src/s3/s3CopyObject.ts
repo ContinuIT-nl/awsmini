@@ -36,7 +36,7 @@ export type S3CopyObjectRequest = Prettify<S3KeyRequest & { sourceBucket: string
  * ```
  */
 export async function s3CopyObject(client: AWSClient, request: S3CopyObjectRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'PUT');
+  const req = S3KeyOptions(request, 'PUT', client.options?.s3PathStyleUrl ?? false);
   req.headers['x-amz-copy-source'] = `${request.sourceBucket}/${request.sourceKey}`;
   return cancelBody(await client.execute(req));
 }

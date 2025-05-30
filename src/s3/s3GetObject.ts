@@ -21,7 +21,7 @@ import { awsAddIfOptions, type AWSIfOptions, S3KeyOptions, type S3KeyRequest } f
 export type S3GetObjectRequest = Prettify<S3KeyRequest & AWSIfOptions>;
 
 export async function s3GetObjectRaw(client: AWSClient, request: S3GetObjectRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'GET');
+  const req = S3KeyOptions(request, 'GET', client.options?.s3PathStyleUrl ?? false);
   awsAddIfOptions(req, request);
   return await client.execute(req);
 }

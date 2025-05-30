@@ -42,3 +42,13 @@ export const clientS3H = new AWSClient({
   region: process.env.S3H_REGION,
   fetch: logFetch,
 });
+
+export const clientGarage = new AWSClient({
+  endpoint: process.env.GARAGE_ENDPOINT,
+  accessKeyId: process.env.GARAGE_ACCESS_KEY,
+  secretAccessKey: process.env.GARAGE_SECRET_KEY,
+  region: process.env.GARAGE_REGION,
+  fetch: logFetch,
+}, {
+  s3PathStyleUrl: true,
+});
