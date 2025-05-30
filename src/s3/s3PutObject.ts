@@ -33,7 +33,7 @@ export type S3PutObjectRequest = Prettify<S3KeyRequest & { body: Uint8Array | st
  * ```
  */
 export async function s3PutObject(client: AWSClient, request: S3PutObjectRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'PUT');
+  const req = S3KeyOptions(request, 'PUT', client.options?.s3PathStyleUrl ?? false);
   req.body = typeof request.body === 'string' ? new TextEncoder().encode(request.body) : request.body;
   const sha256 = request.contentSha256
     ? (typeof request.contentSha256 === 'string' ? request.contentSha256 : '')

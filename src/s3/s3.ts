@@ -7,12 +7,12 @@ export type S3BucketRequest = AWSBaseRequest & { bucket: string };
 export type S3KeyRequest = S3BucketRequest & { key: string };
 
 // Request building
-export const S3KeyOptions = (request: S3KeyRequest, method: HTTPMethod): AWSRequest => {
+export const S3KeyOptions = (request: S3KeyRequest, method: HTTPMethod, pathStyleUrl: boolean = false): AWSRequest => {
   if (!request.key) throw new AwsminiError('Key is required and should be at least one character long', 's3');
   return {
     method,
-    subhost: request.bucket,
-    path: `/${request.key}`,
+    subhost: pathStyleUrl ? undefined : request.bucket,
+    path: pathStyleUrl ? `/${request.bucket}/${request.key}` : `/${request.key}`,
     service: 's3',
     queryParameters: {},
     headers: {},
@@ -21,10 +21,14 @@ export const S3KeyOptions = (request: S3KeyRequest, method: HTTPMethod): AWSRequ
   };
 };
 
-export const S3BaseOptions = (request: S3BucketRequest, method: HTTPMethod): AWSRequest => ({
+export const S3BaseOptions = (
+  request: S3BucketRequest,
+  method: HTTPMethod,
+  pathStyleUrl: boolean = false,
+): AWSRequest => ({
   method,
-  subhost: request.bucket,
-  path: '/',
+  subhost: pathStyleUrl ? undefined : request.bucket,
+  path: pathStyleUrl ? `/${request.bucket}/` : '/',
   service: 's3',
   queryParameters: {},
   headers: {},

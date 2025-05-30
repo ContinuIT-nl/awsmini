@@ -36,7 +36,7 @@ export async function s3CreateMultipartUpload(
   client: AWSClient,
   request: S3CreateMultipartUploadRequest,
 ): Promise<string> {
-  const req = S3KeyOptions(request, 'POST');
+  const req = S3KeyOptions(request, 'POST', client.options?.s3PathStyleUrl ?? false);
   req.queryParameters['uploads'] = '';
   const response = await client.execute(req);
   // Todo: Cache-Control, Content-Disposition, Content-Encoding, Content-Language, Content-Type, Expires

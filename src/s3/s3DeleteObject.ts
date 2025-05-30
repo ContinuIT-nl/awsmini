@@ -33,6 +33,6 @@ export type S3DeleteObjectRequest = Prettify<S3KeyRequest>;
  * ```
  */
 export async function s3DeleteObject(client: AWSClient, request: S3DeleteObjectRequest): Promise<Response> {
-  const req = S3KeyOptions(request, 'DELETE');
+  const req = S3KeyOptions(request, 'DELETE', client.options?.s3PathStyleUrl ?? false);
   return cancelBody(await client.execute(req));
 }

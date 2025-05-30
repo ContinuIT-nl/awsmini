@@ -14,7 +14,7 @@ import {
 import { awsAddIfOptions } from '../src/s3/s3.ts';
 import { assert, assertEquals, assertIsError } from '@std/assert';
 import * as process from 'node:process';
-import { clientAWS, clientR2, clientS3H } from './testUtilities.ts';
+import { clientAWS, clientGarage, clientR2, clientS3H } from './testUtilities.ts';
 import { tryCatch, tryCatchAsync } from '../src/misc/utilities.ts';
 import type { AWSRequest } from '../src/misc/awsTypes.ts';
 import { AwsminiError } from '../src/misc/AwsminiError.ts';
@@ -22,9 +22,10 @@ import { AwsminiError } from '../src/misc/AwsminiError.ts';
 const bucketR2 = process.env.TEST_BUCKET_R2;
 const bucketAWS = process.env.TEST_BUCKET_AWS;
 const bucketS3H = process.env.TEST_BUCKET_S3H;
-if (!bucketR2 || !bucketAWS || !bucketS3H) {
+const bucketGarage = process.env.TEST_BUCKET_GARAGE;
+if (!bucketR2 || !bucketAWS || !bucketS3H || !bucketGarage) {
   throw new Error(
-    'TEST_BUCKET_R2 and TEST_BUCKET_AWS and TEST_BUCKET_S3H must be set. Please provide access to a test bucket in the environment variables.',
+    'TEST_BUCKET_R2 and TEST_BUCKET_AWS and TEST_BUCKET_S3H and TEST_BUCKET_GARAGE must be set. Please provide access to a test bucket in the environment variables.',
   );
 }
 
@@ -371,4 +372,16 @@ Deno.test('awsAddIfOptions', () => {
   );
   assertIsError(error2);
   assert(error2.message.includes('ifModifiedSince and ifUnmodifiedSince cannot be used together'));
+});
+
+Deno.test('s3PutObject - garage', async () => {
+  // https://garagehq.deuxfleurs.fr/documentation/reference-manual/s3-compatibility/
+  console.time('s3PutObject - garage');
+  const result = await s3PutObject(clientGarage, {
+    bucket: bucketGarage,
+    key: 'hello/world',
+    body: 'Hello World',
+  });
+  console.timeEnd('s3PutObject - garage');
+  assert(result.ok, 'S3PutObject failed');
 });
