@@ -1,6 +1,8 @@
 import {
+  type AWSClient,
   s3CopyObject,
   s3DeleteObject,
+  s3DeleteObjects,
   s3GetObject,
   s3GetObjectStream,
   s3GetObjectText,
@@ -14,54 +16,155 @@ import {
 import { awsAddIfOptions } from '../src/s3/s3.ts';
 import { assert, assertEquals, assertIsError } from '@std/assert';
 import * as process from 'node:process';
-import { clientAWS, clientGarage, clientR2, clientS3H } from './testUtilities.ts';
+import { clientAWS, clientGarage, clientR2, clientS3H, duration_ms } from './testUtilities.ts';
 import { tryCatch, tryCatchAsync } from '../src/misc/utilities.ts';
 import type { AWSRequest } from '../src/misc/awsTypes.ts';
 import { AwsminiError } from '../src/misc/AwsminiError.ts';
 
+// Bucket names
 const bucketR2 = process.env.TEST_BUCKET_R2;
 const bucketAWS = process.env.TEST_BUCKET_AWS;
-const bucketS3H = process.env.TEST_BUCKET_S3H;
+const bucketHetzner = process.env.TEST_BUCKET_HETZNER;
 const bucketGarage = process.env.TEST_BUCKET_GARAGE;
-if (!bucketR2 || !bucketAWS || !bucketS3H || !bucketGarage) {
-  throw new Error(
-    'TEST_BUCKET_R2 and TEST_BUCKET_AWS and TEST_BUCKET_S3H and TEST_BUCKET_GARAGE must be set. Please provide access to a test bucket in the environment variables.',
-  );
+if (!bucketR2 || !bucketAWS || !bucketHetzner || !bucketGarage) {
+  throw new Error('TEST_BUCKET_R2 and TEST_BUCKET_AWS and TEST_BUCKET_HETZNER and TEST_BUCKET_GARAGE must be set.');
 }
 
-Deno.test('s3PutObject', async () => {
-  const result = await s3PutObject(clientR2, { bucket: bucketR2, key: 'hello/world', body: 'Hello World' });
-  assert(result.ok, 'S3PutObject failed');
-  const result2 = await s3GetObjectText(clientR2, { bucket: bucketR2, key: 'hello/world' });
-  assertEquals(result2, 'Hello World');
+// Primitives
+async function testPutObjectText(client: AWSClient, bucket: string, key: string, body: string) {
+  const result = await s3PutObject(client, { bucket, key, body });
+  assert(result.ok, 's3PutObject failed');
+}
+
+async function testPutObjectBinary(client: AWSClient, bucket: string, key: string, body: Uint8Array) {
+  const result = await s3PutObject(client, { bucket, key, body });
+  assert(result.ok, 's3PutObject failed');
+}
+
+async function testCopyObject(client: AWSClient, bucket: string, key: string, sourceKey: string) {
+  const result = await s3CopyObject(client, { bucket, key, sourceBucket: bucket, sourceKey });
+  assert(result.ok, 's3CopyObject failed');
+}
+
+async function testHeadObject(client: AWSClient, bucket: string, key: string, bodyLength: number) {
+  const result = await s3HeadObject(client, { bucket, key });
+  assert(result.ok, 'S3HeadObject failed');
+  assertEquals(result.headers.get('content-length'), `${bodyLength}`);
+}
+
+async function testGetObjectText(client: AWSClient, bucket: string, key: string, body: string) {
+  const result = await s3GetObjectText(client, { bucket, key });
+  assertEquals(result, body);
+}
+
+async function testGetObject(client: AWSClient, bucket: string, key: string, body: Uint8Array) {
+  const result = await s3GetObject(client, { bucket, key });
+  assertEquals(result, body);
+}
+
+async function testDeleteObject(client: AWSClient, bucket: string, key: string) {
+  const result = await s3DeleteObject(client, { bucket, key });
+  assert(result.ok, 's3DeleteObject failed');
+}
+
+// Tests
+Deno.test('Basic object operations (Put, Head, Get, Copy, Delete)', async () => {
+  const key = 'hello/world';
+  const key2 = 'hello/again';
+  const body = 'Hello World\n'.repeat(1000); // 12kb, only ASCII characters so length is comparable.
+
+  const putHeadGetDelete = async (client: AWSClient, bucket: string) => {
+    await testPutObjectText(client, bucket, key, body);
+    await testHeadObject(client, bucket, key, body.length);
+    await testGetObjectText(client, bucket, key, body);
+    await testCopyObject(client, bucket, key2, key);
+    await testGetObjectText(client, bucket, key2, body);
+    await testDeleteObject(client, bucket, key);
+    await testDeleteObject(client, bucket, key2);
+  };
+
+  await putHeadGetDelete(clientR2, bucketR2);
+  await putHeadGetDelete(clientAWS, bucketAWS);
+  await putHeadGetDelete(clientS3H, bucketHetzner);
+  await putHeadGetDelete(clientGarage, bucketGarage);
 });
 
-// todo: properties
+Deno.test('PutObject - with sha256', async () => {
+  const key = 'hello/empty';
+  const body = new Uint8Array(0);
+  const key2 = 'hello/full';
+  const body2 = new Uint8Array(3);
+  const contentSha256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
-Deno.test('s3PutObject - Hetzner', async () => {
-  const result = await s3PutObject(clientS3H, { bucket: bucketS3H, key: 'hello/world', body: 'Hello World' });
-  assert(result.ok, 'S3PutObject failed');
-  const result2 = await s3GetObjectText(clientS3H, { bucket: bucketS3H, key: 'hello/world' });
-  assertEquals(result2, 'Hello World');
-  const result3 = await s3DeleteObject(clientS3H, { bucket: bucketS3H, key: 'hello/world' });
-  assert(result3.ok, 's3DeleteObject failed');
+  const putWithHash = async (client: AWSClient, bucket: string) => {
+    const result = await s3PutObject(client, { bucket, key, body, contentSha256 });
+    assert(result.ok, 'S3PutObject failed');
+    const result2 = await s3PutObject(client, { bucket, key: key2, body: body2, contentSha256: true });
+    assert(result2.ok, 'S3PutObject failed');
+    await testDeleteObject(client, bucket, key);
+    await testDeleteObject(client, bucket, key2);
+  };
+
+  await putWithHash(clientR2, bucketR2);
+  await putWithHash(clientAWS, bucketAWS);
+  await putWithHash(clientS3H, bucketHetzner);
+  await putWithHash(clientGarage, bucketGarage);
 });
 
-Deno.test('s3PutObject - with sha256', async () => {
-  const result = await s3PutObject(clientAWS, {
-    bucket: bucketAWS,
-    key: 'hello/empty',
-    body: new Uint8Array(0),
-    contentSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+Deno.test('PutObject - special characters', async () => {
+  const key = '2025-02-27T01:15:19.952Z.html';
+  const body = new Uint8Array(100);
+
+  const putSpecialCharacters = async (client: AWSClient, bucket: string) => {
+    await testPutObjectBinary(client, bucket, key, body);
+    await testGetObject(client, bucket, key, body);
+    await testDeleteObject(client, bucket, key);
+  };
+
+  await putSpecialCharacters(clientR2, bucketR2);
+  await putSpecialCharacters(clientAWS, bucketAWS);
+  await putSpecialCharacters(clientS3H, bucketHetzner);
+  await putSpecialCharacters(clientGarage, bucketGarage);
+});
+
+Deno.test.only('PutObject - GetObject - Performance', async () => {
+  const keys = new Array(10).fill(0).map((_, i) => `hello/world-${i}`);
+  const keys2 = new Array(10).fill(0).map((_, i) => `hello/world-${i}-copy`);
+  const values = new Array(10).fill(0).map((_, i) => `Hello blob${i}\n`.repeat(1000)); // 12kb, only ASCII characters
+
+  const putGetPerformance = async (client: AWSClient, bucket: string) => ({
+    putSeq_ms: await duration_ms(async () => {
+      for (let i = 0; i < keys.length; i++) await testPutObjectText(client, bucket, keys[i], values[i]);
+    }),
+    putConc_ms: await duration_ms(async () => {
+      await Promise.all(keys.map((key, i) => testPutObjectText(client, bucket, key, values[i])));
+    }),
+    getSeq_ms: await duration_ms(async () => {
+      for (let i = 0; i < keys.length; i++) await testGetObjectText(client, bucket, keys[i], values[i]);
+    }),
+    getConc_ms: await duration_ms(async () => {
+      await Promise.all(keys.map((key, i) => testGetObjectText(client, bucket, key, values[i])));
+    }),
+    copySeq_ms: await duration_ms(async () => {
+      for (let i = 0; i < keys.length; i++) await testCopyObject(client, bucket, keys2[i], keys[i]);
+    }),
+    copyConc_ms: await duration_ms(async () => {
+      await Promise.all(keys.map((key, i) => testCopyObject(client, bucket, keys2[i], key))); // todo: parallel copy
+    }),
+    deleteSeq_ms: await duration_ms(async () => {
+      for (let i = 0; i < keys.length; i++) await testDeleteObject(client, bucket, keys[i]);
+    }),
+    deleteConc_ms: await duration_ms(async () => {
+      await s3DeleteObjects(client, { bucket, keys: keys2 });
+    }),
   });
-  assert(result.ok, 'S3PutObject failed');
-  const result2 = await s3PutObject(clientAWS, {
-    bucket: bucketAWS,
-    key: 'hello/full',
-    body: new Uint8Array(3),
-    contentSha256: true,
+
+  console.table({
+    R2: await putGetPerformance(clientR2, bucketR2),
+    AWS: await putGetPerformance(clientAWS, bucketAWS),
+    Hetzner: await putGetPerformance(clientS3H, bucketHetzner),
+    Garage: await putGetPerformance(clientGarage, bucketGarage),
   });
-  assert(result2.ok, 'S3PutObject failed');
 });
 
 // todo: check other things a key must adhere to
@@ -76,73 +179,11 @@ Deno.test('s3PutObject key must be non-empty', async () => {
   assertIsError(error, Error);
 });
 
-Deno.test('s3PutObject - special characters', async () => {
-  const result = await s3PutObject(clientR2, {
-    bucket: bucketR2,
-    key: '2025-02-27T01:15:19.952Z.html',
-    body: new Uint8Array(100),
-  });
-  assert(result.ok, 'S3PutObject failed');
-  const result2 = await s3DeleteObject(clientR2, { bucket: bucketR2, key: '2025-02-27T01:15:19.952Z.html' });
-  assert(result2.ok, 's3DeleteObject failed');
-});
-
-Deno.test('s3CopyObject abort', async () => {
-  const result = await s3PutObject(clientR2, { bucket: bucketR2, key: 'hello/world', body: new Uint8Array(100) });
-  assert(result.ok, 'S3PutObject failed');
-
-  const result5 = await s3DeleteObject(clientR2, { bucket: bucketR2, key: 'hello/again' });
-  assert(result5.ok, 's3DeleteObject failed');
-
-  const result2 = await s3CopyObject(clientR2, {
-    bucket: bucketR2,
-    key: 'hello/again',
-    sourceBucket: bucketR2,
-    sourceKey: 'hello/world',
-  });
-  assert(result2.ok, 'S3CopyObject failed');
-
-  const result3 = await s3HeadObject(clientR2, { bucket: bucketR2, key: 'hello/again' });
-  assert(result3.ok, 'S3HeadObject failed');
-  assertEquals(result3.headers.get('content-length'), '100');
-
-  const result4 = await s3DeleteObject(clientR2, { bucket: bucketR2, key: 'hello/again' });
-  assert(result4.ok, 's3DeleteObject failed');
-});
-
-Deno.test('s3DeleteObject', async () => {
-  // Make sure an object exists
-  const result1 = await s3PutObject(clientR2, { bucket: bucketR2, key: 'hello/world', body: new Uint8Array(100) });
-  assert(result1.ok, 'S3PutObject failed');
-
-  // Delete the object
-  const result2 = await s3DeleteObject(clientR2, { bucket: bucketR2, key: 'hello/world' });
-  assert(result2.ok, 's3DeleteObject failed');
-});
-
 Deno.test('s3DeleteObject nonexisting', async () => {
-  const result = await s3DeleteObject(clientR2, { bucket: bucketR2, key: 'nonexisting/key' });
-  assert(result.ok, 's3DeleteObject nonexisting failed');
-});
-
-Deno.test('s3HeadObject', async () => {
-  // Make sure an object exists
-  const result1 = await s3PutObject(clientR2, { bucket: bucketR2, key: 'hello/world', body: new Uint8Array(100) });
-  assert(result1.ok, 'S3PutObject failed');
-
-  const result = await s3HeadObject(clientR2, { bucket: bucketR2, key: 'hello/world' });
-  assert(result.ok, 'S3HeadObject failed');
-  assertEquals(result.headers.get('content-length'), '100');
+  await testDeleteObject(clientR2, bucketR2, 'nonexisting/key');
 });
 
 Deno.test('s3HeadObject abort', async () => {
-  // todo: the test fails
-  /*
-error: AssertionError: Expected function to throw.
-error: (in promise) TimeoutError: Signal timed out.
-This error was not caught from a test and caused the test runner to fail on the referenced module.
-It most likely originated from a dangling promise, event/timeout handler or top-level code.
- */
   const [err, result] = await tryCatchAsync(s3HeadObject(clientR2, {
     bucket: bucketR2,
     key: 'hello/world',
@@ -150,22 +191,6 @@ It most likely originated from a dangling promise, event/timeout handler or top-
   }));
   assertEquals(err?.name, 'TimeoutError', 's3HeadObject should have failed with TimeoutError');
   assertEquals(result, null, 's3HeadObject timed out, no result should be returned');
-});
-
-Deno.test('s3GetObject', async () => {
-  console.time(`S3GetObject 10 calls sequentially`);
-  for (let i = 0; i < 10; i++) {
-    await s3GetObject(clientR2, { bucket: bucketR2, key: 'hello/world' });
-  }
-  console.timeEnd(`S3GetObject 10 calls sequentially`);
-
-  console.time(`S3GetObject 10 calls concurrently`);
-  const promises = [];
-  for (let i = 0; i < 10; i++) {
-    promises.push(s3GetObject(clientR2, { bucket: bucketR2, key: 'hello/world' }));
-  }
-  await Promise.all(promises);
-  console.timeEnd(`S3GetObject 10 calls concurrently`);
 });
 
 Deno.test('s3GetObject - special characters', async () => {
@@ -205,12 +230,6 @@ Deno.test('s3GetObjectStream - not found', async () => {
   assert(err, 's3GetObjectStream should have failed');
   assertIsError(err, AwsminiError);
   assert(stream === null, 'stream should be null');
-});
-
-Deno.test('s3GetObjectText', async () => {
-  await s3PutObject(clientR2, { bucket: bucketR2, key: 'hello/world', body: 'Hello World' });
-  const text = await s3GetObjectText(clientR2, { bucket: bucketR2, key: 'hello/world' });
-  assertEquals(text, 'Hello World');
 });
 
 Deno.test('s3ListObjects R2', async () => {
@@ -374,14 +393,12 @@ Deno.test('awsAddIfOptions', () => {
   assert(error2.message.includes('ifModifiedSince and ifUnmodifiedSince cannot be used together'));
 });
 
-Deno.test('s3PutObject - garage', async () => {
+Deno.test('s3ListBuckets - garage', async () => {
   // https://garagehq.deuxfleurs.fr/documentation/reference-manual/s3-compatibility/
-  console.time('s3PutObject - garage');
-  const result = await s3PutObject(clientGarage, {
-    bucket: bucketGarage,
-    key: 'hello/world',
-    body: 'Hello World',
-  });
-  console.timeEnd('s3PutObject - garage');
-  assert(result.ok, 'S3PutObject failed');
+  const result = await s3ListBuckets(clientGarage, { prefix: '' });
+  assert(result.buckets.length > 0, 'S3ListBuckets returned no buckets');
+  assert(
+    result.buckets.some((bucket) => bucket.name === bucketGarage),
+    `S3ListBuckets returned no bucket ${bucketGarage}`,
+  );
 });

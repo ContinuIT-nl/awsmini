@@ -43,6 +43,7 @@ export const clientS3H = new AWSClient({
   fetch: logFetch,
 });
 
+// https://garagehq.deuxfleurs.fr/documentation/reference-manual/s3-compatibility/
 export const clientGarage = new AWSClient({
   endpoint: process.env.GARAGE_ENDPOINT,
   accessKeyId: process.env.GARAGE_ACCESS_KEY,
@@ -52,3 +53,9 @@ export const clientGarage = new AWSClient({
 }, {
   s3PathStyleUrl: true,
 });
+
+export const duration_ms = async (p: () => Promise<unknown>) => {
+  const start = new Date();
+  await p();
+  return new Date().getTime() - start.getTime();
+};
