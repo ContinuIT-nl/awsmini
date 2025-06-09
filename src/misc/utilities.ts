@@ -36,6 +36,9 @@ export const hmacSha256 = async (key: BufferSource, data: BufferSource) => {
 
 export const hashSha256 = async (data: BufferSource) => bufferToHex(await crypto.subtle.digest('SHA-256', data));
 
+export const hashSha256Base64 = async (data: BufferSource) =>
+  btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256', data))));
+
 export const emptyHashSha256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
 const xmlEscapeMap = {

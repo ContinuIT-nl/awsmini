@@ -67,6 +67,12 @@ async function testDeleteObject(client: AWSClient, bucket: string, key: string) 
   assert(result.ok, 's3DeleteObject failed');
 }
 
+async function testDeleteObjects(client: AWSClient, bucket: string, keys: string[]) {
+  const result = await s3DeleteObjects(client, { bucket, keys });
+  assert(result.deleted.length === keys.length, 's3DeleteObjects failed');
+  assert(result.errors.length === 0, 's3DeleteObjects failed');
+}
+
 // Tests
 Deno.test('Basic object operations (Put, Head, Get, Copy, Delete)', async () => {
   const key = 'hello/world';
@@ -127,7 +133,7 @@ Deno.test('PutObject - special characters', async () => {
   await putSpecialCharacters(clientGarage, bucketGarage);
 });
 
-Deno.test.only('PutObject - GetObject - Performance', async () => {
+Deno.test('PutObject - GetObject - Performance', async () => {
   const keys = new Array(10).fill(0).map((_, i) => `hello/world-${i}`);
   const keys2 = new Array(10).fill(0).map((_, i) => `hello/world-${i}-copy`);
   const values = new Array(10).fill(0).map((_, i) => `Hello blob${i}\n`.repeat(1000)); // 12kb, only ASCII characters
@@ -155,7 +161,7 @@ Deno.test.only('PutObject - GetObject - Performance', async () => {
       for (let i = 0; i < keys.length; i++) await testDeleteObject(client, bucket, keys[i]);
     }),
     deleteConc_ms: await duration_ms(async () => {
-      await s3DeleteObjects(client, { bucket, keys: keys2 });
+      await testDeleteObjects(client, bucket, keys2);
     }),
   });
 

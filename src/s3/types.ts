@@ -35,3 +35,22 @@ export type S3BucketListResult = {
   continuationToken?: string;
   prefix?: string;
 };
+
+export type S3DeleteObjectsResult = {
+  deleted: S3DeletedObject[];
+  errors: S3DeleteError[];
+};
+
+export type S3DeletedObject = {
+  key: string;
+  versionId?: string;
+  deleteMarker?: boolean;
+  deleteMarkerVersionId?: string;
+};
+
+export type S3DeleteError = {
+  key: string;
+  versionId?: string;
+  code: string;
+  message: string;
+};
