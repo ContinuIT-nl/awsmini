@@ -13,6 +13,7 @@ import type { S3DeleteObjectsResult } from './types.ts';
  * @typedef {Object} s3DeleteObjectsRequest
  * @property {string} bucket - The bucket to delete the objects from
  * @property {string[]} keys - The keys of the objects to delete, valid values are 1..1000
+ * @property {boolean} [quiet=false] - If true, the response will not contain the deleted objects only the errors
  * @property {string|undefined} [signal] - abort signal
  * @property {boolean} [checkResponse=true] - check the response
  *

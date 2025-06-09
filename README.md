@@ -147,6 +147,22 @@ const response = await s3DeleteObject(client, {
 console.log('Delete successful:', response.ok);
 ```
 
+### s3DeleteObjects
+
+```typescript
+import { s3DeleteObjects } from './src/s3/s3DeleteObjects.ts';
+
+const client = obtainClient(); // See Setup AWS client
+
+// Delete an object from S3
+const response = await s3DeleteObjects(client, {
+  bucket: 'my-bucket',
+  keys: ['file-to-delete.txt', 'also-to-delete.txt'],
+});
+
+console.log('Delete successful:', response.errors.length === 0);
+```
+
 ### s3ListObjects
 
 Warning: There is a 1000 file limit (see pagination). Reference the wrapper.
