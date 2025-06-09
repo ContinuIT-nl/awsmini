@@ -408,3 +408,40 @@ Deno.test('s3ListBuckets - garage', async () => {
     `S3ListBuckets returned no bucket ${bucketGarage}`,
   );
 });
+
+Deno.test('s3DeleteObjects', async () => {
+  const key = 'hello/world';
+  const executeTest = async (client: AWSClient, bucket: string) => {
+    const result = await s3DeleteObjects(client, { bucket, keys: [] });
+    assertEquals(result.deleted.length, 0, 'S3DeleteObjects should return no objects deleted (1)');
+    assertEquals(result.errors.length, 0, 'S3DeleteObjects returned errors (1)');
+
+    await testPutObjectText(client, bucket, key, 'Hello World');
+
+    const result2 = await s3DeleteObjects(client, { bucket, keys: [key], quiet: true });
+    assertEquals(result2.deleted.length, 0, 'S3DeleteObjects should return no objects deleted (2)');
+    assertEquals(result2.errors.length, 0, 'S3DeleteObjects returned errors (2)');
+    // hello/world should be deleted here
+
+    const list = await s3ListObjects(client, { bucket, prefix: key });
+    assertEquals(list.content.length, 0, 'S3ListObjects should return no objects');
+
+    const result3 = await s3DeleteObjects(client, { bucket, keys: [key] });
+    assertEquals(result3.deleted.length, 1, 'S3DeleteObjects should return 1 athough object was not there');
+    assertEquals(result3.errors.length, 0, 'S3DeleteObjects returned errors (3)');
+
+    let error: Error | undefined = undefined;
+    try {
+      await s3DeleteObjects(client, { bucket, keys: new Array(1001).fill(key) });
+    } catch (err) {
+      error = err as Error;
+    }
+    assert(!!error, 'An error should have be thrown');
+    assertIsError(error, AwsminiError);
+  };
+
+  await executeTest(clientR2, bucketR2);
+  await executeTest(clientAWS, bucketAWS);
+  await executeTest(clientS3H, bucketHetzner);
+  await executeTest(clientGarage, bucketGarage);
+});

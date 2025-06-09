@@ -43,9 +43,9 @@ export async function s3DeleteObjects(
   if (request.keys.length > 1000) throw new AwsminiError('S3DeleteObjects: max 1000 keys', 's3');
   const req = S3BaseOptions(request, 'POST', client.options?.s3PathStyleUrl ?? false);
   req.queryParameters['delete'] = '';
-  const body = `<Delete>${
-    request.keys.map((key) => `<Object><Key>${xmlEscape(key)}</Key></Object>`).join('')
-  }</Delete>${request.quiet ? '<Quiet>true</Quiet>' : ''}`;
+  const body = `<Delete>${request.keys.map((key) => `<Object><Key>${xmlEscape(key)}</Key></Object>`).join('')}${
+    request.quiet ? '<Quiet>true</Quiet>' : ''
+  }</Delete>`;
   req.body = new TextEncoder().encode(body);
   const hash = await hashSha256(req.body);
 
