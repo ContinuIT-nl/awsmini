@@ -126,7 +126,7 @@ export class AWSClient {
     // Extract error code and message from the response body
     // S3 uses this format: <Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><RequestId>1234567890</RequestId><HostId>1234567890</HostId></Error>
     if (errorsText.startsWith('<')) {
-      const errors = errorsText.match(/<Error><Code>(.*?)<\/Code><Message>(.*?)<\/Message><\/Error>/);
+      const errors = errorsText.match(/<Error><Code>(.*?)<\/Code><Message>(.*?)<\/Message>(.*?)<\/Error>/);
       return { code: errors?.[1] ?? 'unknown_error', message: errors?.[2] ?? 'unknown error' };
     }
 

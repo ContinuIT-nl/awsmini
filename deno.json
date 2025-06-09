@@ -1,12 +1,12 @@
 {
   "name": "@continuit/awsmini",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Access AWS (compatible) services fast in with simple tree shakeable code",
   "repository": "https://github.com/ContinuIT-nl/awsmini",
   "license": "MIT",
   "author": "ContinuIT BV, The Netherlands",
   "tasks": {
-    "test": "deno test -RWNE --env=.env --coverage=data/coverage.lcov --clean && deno task coverage && deno task coverage-detailed",
+    "test": "deno test -RWNE --env=.env --coverage=data/coverage.lcov --clean",
     "test-client": "deno test -RWNE --env=.env ./test/client.test.ts",
     "test-utilities": "deno test -RWNE --env=.env ./test/utilities.test.ts",
     "test-s3": "deno test -RWNE --env=.env ./test/s3.test.ts",
