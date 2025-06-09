@@ -23,7 +23,8 @@ class DeleteObjectsParser {
     addElement(deleted, 'Key').text = (text: string) => this.activeDeleted.key = text;
     addElement(deleted, 'VersionId').text = (text: string) => this.activeDeleted.versionId = text;
     addElement(deleted, 'DeleteMarker').text = (text: string) => this.activeDeleted.deleteMarker = text === 'true';
-    addElement(deleted, 'DeleteMarkerVersionId').text = (text: string) => this.activeDeleted.deleteMarkerVersionId = text;
+    addElement(deleted, 'DeleteMarkerVersionId').text = (text: string) =>
+      this.activeDeleted.deleteMarkerVersionId = text;
 
     // Errors
     const errors = addElement(events, 'DeleteResult/Error');

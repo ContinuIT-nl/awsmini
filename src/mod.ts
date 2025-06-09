@@ -21,7 +21,16 @@ export { s3UploadPart, type S3UploadPartRequest } from './s3/s3UploadPart.ts';
 export { s3CompleteMultipartUpload, type S3CompleteMultipartUploadRequest } from './s3/s3CompleteMultipartUpload.ts';
 export { s3AbortMultipartUpload, type S3AbortMultipartUploadRequest } from './s3/s3AbortMultipartUpload.ts';
 
-export type { ListObjectResult, S3Bucket, S3BucketListResult, S3Object, S3Owner, S3DeleteObjectsResult, S3DeletedObject, S3DeleteError } from './s3/types.ts';
+export type {
+  ListObjectResult,
+  S3Bucket,
+  S3BucketListResult,
+  S3DeletedObject,
+  S3DeleteError,
+  S3DeleteObjectsResult,
+  S3Object,
+  S3Owner,
+} from './s3/types.ts';
 
 export { buildMultipartUploadBody, S3MultipartUpload, S3MultipartUploadStream } from './s3/multiPartUpload.ts';
 

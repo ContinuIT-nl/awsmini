@@ -29,15 +29,14 @@ export const encodeRfc3986 = (str: string) =>
 export const bufferToHex = (buffer: ArrayBuffer) =>
   Array.from(new Uint8Array(buffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
 
+export const bufferToBase64 = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
 export const hmacSha256 = async (key: BufferSource, data: BufferSource) => {
   const skey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   return await crypto.subtle.sign('HMAC', skey, data);
 };
 
-export const hashSha256 = async (data: BufferSource) => bufferToHex(await crypto.subtle.digest('SHA-256', data));
-
-export const hashSha256Base64 = async (data: BufferSource) =>
-  btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256', data))));
+export const hashSha256 = async (data: BufferSource) => await crypto.subtle.digest('SHA-256', data);
 
 export const emptyHashSha256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 

@@ -23,7 +23,7 @@ export async function signRequest(request: AWSFullRequest, config: AWSConfig) {
   // Determine the SHA256 of the content of the request
   const hasBody = request.body && request.body.length > 0;
   if (!request.headers['x-amz-content-sha256']) {
-    const sha256 = hasBody ? await hashSha256(request.body!) : emptyHashSha256;
+    const sha256 = hasBody ? bufferToHex(await hashSha256(request.body!)) : emptyHashSha256;
     request.headers['x-amz-content-sha256'] = sha256;
   }
   const bodyHash = request.headers['x-amz-content-sha256'];
@@ -55,7 +55,7 @@ export async function signRequest(request: AWSFullRequest, config: AWSConfig) {
   // Build canonical request and hash it
   const canonicalRequest =
     `${request.method}\n${request.path}\n${parameterString}\n${headerString}\n\n${headerNames}\n${bodyHash}`;
-  const canonicalRequestHash = await hashSha256(encoder.encode(canonicalRequest));
+  const canonicalRequestHash = bufferToHex(await hashSha256(encoder.encode(canonicalRequest)));
 
   // AWS4 signature
   const credentialString = `${date}/${config.region}/${request.service}/aws4_request`;

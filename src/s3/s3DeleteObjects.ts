@@ -1,9 +1,9 @@
 import type { AWSClient } from '../client/AWSClient.ts';
 import { AwsminiError } from '../misc/AwsminiError.ts';
-import { hashSha256, hashSha256Base64, type Prettify, xmlEscape } from '../misc/utilities.ts';
+import { bufferToBase64, bufferToHex, hashSha256, type Prettify, xmlEscape } from '../misc/utilities.ts';
 import { S3BaseOptions, type S3BucketRequest } from './s3.ts';
 import { parseDeleteObjects } from './DeleteObjectsParser.ts';
-import { S3DeleteObjectsResult } from './types.ts';
+import type { S3DeleteObjectsResult } from './types.ts';
 
 // todo: if-match, x-amz-if-match-last-modified-time, x-amz-if-match-size
 
@@ -35,7 +35,10 @@ export type S3DeleteObjectsRequest = Prettify<S3BucketRequest & { keys: string[]
  * console.log(response.ok, response.headers);
  * ```
  */
-export async function s3DeleteObjects(client: AWSClient, request: S3DeleteObjectsRequest): Promise<S3DeleteObjectsResult> {
+export async function s3DeleteObjects(
+  client: AWSClient,
+  request: S3DeleteObjectsRequest,
+): Promise<S3DeleteObjectsResult> {
   if (request.keys.length === 0) return { deleted: [], errors: [] };
   if (request.keys.length > 1000) throw new AwsminiError('S3DeleteObjects: max 1000 keys', 's3');
   const req = S3BaseOptions(request, 'POST', client.options?.s3PathStyleUrl ?? false);
@@ -44,8 +47,10 @@ export async function s3DeleteObjects(client: AWSClient, request: S3DeleteObject
     request.keys.map((key) => `<Object><Key>${xmlEscape(key)}</Key></Object>`).join('')
   }</Delete>${request.quiet ? '<Quiet>true</Quiet>' : ''}`;
   req.body = new TextEncoder().encode(body);
-  req.headers['x-amz-content-sha256'] = await hashSha256(req.body);
-  req.headers['x-amz-checksum-sha256'] = await hashSha256Base64(req.body); 
+  const hash = await hashSha256(req.body);
+
+  req.headers['x-amz-content-sha256'] = bufferToHex(hash);
+  req.headers['x-amz-checksum-sha256'] = bufferToBase64(hash);
   const res = await client.execute(req);
   if (!res.ok) throw new AwsminiError('S3DeleteObjects: failed', 's3', { statusCode: res.status });
   const xmlResponse = await res.text();
