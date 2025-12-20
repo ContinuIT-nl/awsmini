@@ -1,8 +1,11 @@
 import { AWSClient } from '../src/mod.ts';
 import * as process from 'node:process';
 
-const headersToString = (headers: Headers) =>
-  [...headers.entries()].map(([key, value]) => `${key}: ${value}`).join('\n');
+const headersToString = (headers: Headers) => {
+  const entries: string[] = [];
+  headers.forEach((value, key) => entries.push(`${key}: ${value}`));
+  return entries.join('\n');
+};
 
 const logRequest = false;
 const logResponse = false;

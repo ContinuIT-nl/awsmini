@@ -36,7 +36,7 @@ async function testPutObjectText(client: AWSClient, bucket: string, key: string,
   assert(result.ok, 's3PutObject failed');
 }
 
-async function testPutObjectBinary(client: AWSClient, bucket: string, key: string, body: Uint8Array) {
+async function testPutObjectBinary(client: AWSClient, bucket: string, key: string, body: Uint8Array<ArrayBuffer>) {
   const result = await s3PutObject(client, { bucket, key, body });
   assert(result.ok, 's3PutObject failed');
 }

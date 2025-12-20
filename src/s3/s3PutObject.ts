@@ -14,7 +14,9 @@ import { S3KeyOptions, type S3KeyRequest } from './s3.ts';
  * @property {AbortSignal} [signal] - An optional AbortSignal to cancel the request
  * @property {boolean} [checkResponse] - Whether to check the response
  */
-export type S3PutObjectRequest = Prettify<S3KeyRequest & { body: Uint8Array | string; contentSha256?: string | true }>;
+export type S3PutObjectRequest = Prettify<
+  S3KeyRequest & { body: Uint8Array<ArrayBuffer> | string; contentSha256?: string | true }
+>;
 
 /**
  * Put an object into S3

@@ -7,7 +7,7 @@ import { s3UploadPart } from './s3UploadPart.ts';
 import { AwsminiError } from '../misc/AwsminiError.ts';
 
 export type S3MultipartUploadPart = {
-  body: Uint8Array;
+  body: Uint8Array<ArrayBuffer>;
   isFinalPart: boolean;
 };
 
@@ -98,7 +98,7 @@ export async function S3MultipartUpload(client: AWSClient, request: S3MultipartU
  * @param etags - The etags of the parts to upload.
  * @returns The body for a complete multipart upload request.
  */
-export const buildMultipartUploadBody = (etags: string[]): Uint8Array => {
+export const buildMultipartUploadBody = (etags: string[]): Uint8Array<ArrayBuffer> => {
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
@@ -129,7 +129,7 @@ export function S3MultipartUploadStream(client: AWSClient, request: S3MultipartU
   const _10MB_ = 10 * 1024 * 1024;
   const reader = request.stream.getReader();
 
-  let buffer: Uint8Array = new Uint8Array(0);
+  let buffer: Uint8Array<ArrayBuffer> = new Uint8Array(0);
   let isStreamDone = false;
 
   return S3MultipartUpload(client, {
@@ -157,7 +157,7 @@ export function S3MultipartUploadStream(client: AWSClient, request: S3MultipartU
       // Determine if this is the final part
       const isFinalPart = isStreamDone;
 
-      let partBuffer: Uint8Array;
+      let partBuffer: Uint8Array<ArrayBuffer>;
 
       if (isFinalPart) {
         // For the final part, use whatever is left in the buffer
@@ -165,7 +165,7 @@ export function S3MultipartUploadStream(client: AWSClient, request: S3MultipartU
         buffer = new Uint8Array(0);
       } else {
         // For non-final parts, use exactly 10MB
-        partBuffer = buffer.slice(0, _10MB_);
+        partBuffer = buffer.slice(0, _10MB_) as Uint8Array<ArrayBuffer>;
         buffer = buffer.slice(_10MB_);
       }
 

@@ -15,7 +15,7 @@ import { S3KeyOptions, type S3KeyRequest } from './s3.ts';
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
  */
 export type S3UploadPartRequest = Prettify<
-  S3KeyRequest & { uploadId: string; partNumber: number; body: Uint8Array }
+  S3KeyRequest & { uploadId: string; partNumber: number; body: Uint8Array<ArrayBuffer> }
 >;
 
 /**

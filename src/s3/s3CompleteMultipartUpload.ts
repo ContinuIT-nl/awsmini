@@ -11,7 +11,9 @@ import { S3KeyOptions, type S3KeyRequest } from './s3.ts';
  * @property {string} uploadId - The upload ID of the multipart upload
  * @property {Uint8Array} body - The body of the multipart upload (XML)
  */
-export type S3CompleteMultipartUploadRequest = Prettify<S3KeyRequest & { uploadId: string; body: Uint8Array }>;
+export type S3CompleteMultipartUploadRequest = Prettify<
+  S3KeyRequest & { uploadId: string; body: Uint8Array<ArrayBuffer> }
+>;
 
 /**
  * Complete a multipart upload

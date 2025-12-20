@@ -21,7 +21,7 @@ export type AWSRequest = {
   service: AWSRequestService;
   queryParameters: Record<string, string>;
   headers: Record<string, string>;
-  body?: Uint8Array;
+  body?: Uint8Array<ArrayBuffer>;
   signal?: AbortSignal;
   checkResponse: boolean;
 };
